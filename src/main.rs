@@ -2,6 +2,7 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
+mod tests;
 mod utils;
 use clap::Parser;
 use colored::Colorize;

@@ -8,6 +8,7 @@ use toml::Value as TomlVal;
 
 // enum for all serde_ext::Value with manual serialize impl to make the wrapper transparent
 
+#[derive(Debug, PartialEq)]
 pub enum Vals {
     Json(JsonVal),
     Toml(TomlVal),
@@ -29,6 +30,7 @@ impl Serialize for Vals {
 
 // main data type enum
 
+#[derive(Debug, PartialEq)]
 pub enum UniversalData {
     Table {
         headers: Vec<String>,

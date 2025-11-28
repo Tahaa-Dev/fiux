@@ -19,7 +19,7 @@ pub fn write_json(data: &UniversalData, path: &PathBuf, verbose: bool) {
 
         // If table based, uses the `.zip()` method to bind table headers (column names) as keys to their values in the rows to form key-value pairs for serde_json to serialize
     } else if let UniversalData::Table { headers, rows } = data {
-        let mut json_str = String::from("[\n");
+        let mut json_str = String::from("[");
 
         let new_headers: Vec<String> = headers
             .iter()

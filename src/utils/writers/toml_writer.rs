@@ -50,15 +50,23 @@ pub fn toml_writer(data: &UniversalData, path: &PathBuf, verbose: bool) {
         rows.iter().for_each(|row| {
             toml_str.push_str("[[Rows]]\n");
             new_headers.iter().zip(row.iter()).for_each(|(h, v)| {
-                let v = v.replace('\\', "\\\\").replace('"', "\\\"");
+                let mut v = v.replace('\\', "\\\\").replace('"', "\\\"");
                 h.trim().to_string();
+
+                if v.parse::<f64>().is_err()
+                    && v.parse::<i64>().is_err()
+                    && v != "true"
+                    && v != "false"
+                {
+                    v = format!("\"{}\"", v);
+                }
 
                 if h.bytes()
                     .any(|c| !(c.is_ascii_alphanumeric() || c == b'_' || c == b'-'))
                 {
-                    toml_str.push_str(&format!("\"{}\" = \"{}\"\n", h, v));
+                    toml_str.push_str(&format!("\"{}\" = {}\n", h, v));
                 } else {
-                    toml_str.push_str(&format!("{} = \"{}\"\n", h, v));
+                    toml_str.push_str(&format!("{} = {}\n", h, v));
                 }
             });
 
