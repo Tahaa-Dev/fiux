@@ -1,5 +1,5 @@
-use crate::utils::{ByteTypes, WriterStreams};
+use crate::utils::{DataTypes, WriterStreams};
 
-pub fn toml_decoder(content: Vec<u8>) -> WriterStreams {
-    WriterStreams::LineByLine { iter: Box::new(std::iter::once(ByteTypes::Raw(content))) }
+pub fn toml_decoder(content: toml::Value) -> WriterStreams {
+    WriterStreams::Values { iter: Box::new(std::iter::once(DataTypes::Toml(content))) }
 }

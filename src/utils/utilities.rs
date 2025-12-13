@@ -3,33 +3,37 @@ use std::process::exit;
 use colored::Colorize;
 
 use csv::ByteRecord;
+use serde::Serialize;
 
 pub enum WriterStreams {
-    LineByLine { iter: Box<dyn Iterator<Item = ByteTypes>> },
+    Values { iter: Box<dyn Iterator<Item = DataTypes>> },
 
-    Table { headers: Vec<String>, iter: Box<dyn Iterator<Item = ByteTypes>> },
+    Table { headers: Vec<String>, iter: Box<dyn Iterator<Item = DataTypes>> },
 }
 
-pub enum ByteTypes {
-    Raw(Vec<u8>),
+pub enum DataTypes {
+    Json(serde_json::Value),
+
+    Toml(toml::Value),
 
     Csv(ByteRecord),
 }
 
-pub fn into_raw_bytes(bytes: ByteTypes) -> Vec<u8> {
-    match bytes {
-        ByteTypes::Raw(raw_bytes) => raw_bytes,
-
-        ByteTypes::Csv(byte_record) => byte_record.as_slice().to_vec(),
+impl Serialize for DataTypes {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            DataTypes::Json(j) => j.serialize(serializer),
+            DataTypes::Toml(t) => t.serialize(serializer),
+            DataTypes::Csv(c) => c.as_slice().serialize(serializer),
+        }
     }
 }
 
-pub fn into_byte_record(bytes: ByteTypes) -> ByteRecord {
-    match bytes {
-        ByteTypes::Csv(byte_record) => byte_record,
-
-        ByteTypes::Raw(_) => ByteRecord::new(),
-    }
+pub fn into_byte_record(brecord: DataTypes) -> ByteRecord {
+    if let DataTypes::Csv(brec) = brecord { brec } else { ByteRecord::new() }
 }
 
 // Custom better expect trait for better error messages without duping code

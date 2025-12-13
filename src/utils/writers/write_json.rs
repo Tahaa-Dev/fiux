@@ -4,9 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use serde_json::Value;
-
-use crate::utils::{BetterExpect, WriterStreams, into_byte_record, into_raw_bytes};
+use crate::utils::{BetterExpect, WriterStreams, into_byte_record};
 
 pub fn write_json(data_stream: WriterStreams, path: &PathBuf, verbose: bool) {
     let file = OpenOptions::new().write(true).open(path).better_expect(
@@ -21,13 +19,9 @@ pub fn write_json(data_stream: WriterStreams, path: &PathBuf, verbose: bool) {
     let mut buffered_writer = BufWriter::new(&file);
 
     match data_stream {
-        WriterStreams::LineByLine { iter } => {
+        WriterStreams::Values { iter } => {
             iter.for_each(|obj| {
-                // turn raw bytes into a `serde_json::Value` tree
-                let json_object: Value = serde_json::from_slice(into_raw_bytes(obj).as_slice())
-                    .better_expect("ERROR: Invalid JSON error in input file.", verbose);
-
-                serde_json::to_writer_pretty(&mut buffered_writer, &json_object).better_expect(
+                serde_json::to_writer_pretty(&mut buffered_writer, &obj).better_expect(
                     format!(
                         "ERROR: Failed to write JSON into output file [{}].",
                         path.to_str().unwrap_or("[output.json]")
@@ -138,13 +132,13 @@ pub fn write_json(data_stream: WriterStreams, path: &PathBuf, verbose: bool) {
                         .write(esc_buf.as_slice())
                         .better_expect("ERROR: Failed to write value into output file.", verbose);
                 });
-                buffered_writer.write(b"  }").better_expect(
+                buffered_writer.write(b"\n  }").better_expect(
                     "ERROR: Failed to write closing curly brace into output file.",
                     verbose,
                 );
             });
             buffered_writer
-                .write(b"]")
+                .write(b"\n]")
                 .better_expect("ERROR: Failed to write closing bracket into output file.", verbose);
 
             buffered_writer

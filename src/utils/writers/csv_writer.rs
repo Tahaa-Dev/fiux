@@ -1,6 +1,7 @@
 use colored::Colorize;
 
 use crate::utils::{BetterExpect, WriterStreams, into_byte_record};
+
 use std::path::PathBuf;
 
 pub fn csv_writer(data_stream: WriterStreams, path: &PathBuf, verbose: bool) {
@@ -42,7 +43,7 @@ pub fn csv_writer(data_stream: WriterStreams, path: &PathBuf, verbose: bool) {
                 verbose,
             );
         }
-        WriterStreams::LineByLine { iter } => {
+        WriterStreams::Values { iter } => {
             iter.last();
             eprintln!(
                 "{}",
