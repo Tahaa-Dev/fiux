@@ -2,6 +2,7 @@ use std::{fs::File, io::BufReader};
 
 use crate::utils::{BetterExpect, DataTypes, WriterStreams};
 
+#[inline]
 pub fn csv_decoder(
     mut reader: csv::Reader<BufReader<File>>,
     verbose: bool,

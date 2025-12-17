@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use crate::utils::BetterExpect;
 
+#[inline]
 pub fn toml_reader(path: &PathBuf, verbose: bool) -> toml::Value {
     let file_bytes = std::fs::read(path).better_expect(
         format!(

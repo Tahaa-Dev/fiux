@@ -4,6 +4,7 @@ use crate::utils::{BetterExpect, DataTypes, WriterStreams, into_byte_record};
 
 use std::io::BufWriter;
 
+#[inline]
 pub fn csv_writer(
     data_stream: WriterStreams<impl Iterator<Item = DataTypes>>,
     file: std::fs::File,

@@ -4,6 +4,7 @@ use toml::map::Map;
 
 use crate::utils::{BetterExpect, DataTypes, WriterStreams, into_byte_record};
 
+#[inline]
 pub fn toml_writer(
     data_stream: WriterStreams<impl Iterator<Item = DataTypes>>,
     file: std::fs::File,
@@ -79,29 +80,41 @@ pub fn toml_writer(
                         esc_buf.extend_from_slice(v);
                     } else {
                         esc_buf.push(b'"');
-                        v.iter().for_each(|byte| match *byte {
-                            b'\\' => {
-                                esc_buf.push(b'\\');
-                                esc_buf.push(b'\\');
+                        let mut start = 0usize;
+                        v.iter().enumerate().for_each(|(idx, byte)| {
+                            let chunk = &v[start..idx];
+                            match *byte {
+                                b'\\' => {
+                                    esc_buf.extend_from_slice(chunk);
+                                    esc_buf.extend_from_slice(b"\\\\");
+                                    start = idx + 1;
+                                }
+                                b'\n' => {
+                                    esc_buf.extend_from_slice(chunk);
+                                    esc_buf.extend_from_slice(b"\\n");
+                                    start = idx + 1;
+                                }
+                                b'"' => {
+                                    esc_buf.extend_from_slice(chunk);
+                                    esc_buf.extend_from_slice(b"\\\"");
+                                    start = idx + 1;
+                                }
+                                b'\t' => {
+                                    esc_buf.extend_from_slice(chunk);
+                                    esc_buf.extend_from_slice(b"\\t");
+                                    start = idx + 1;
+                                }
+                                b'\r' => {
+                                    esc_buf.extend_from_slice(chunk);
+                                    esc_buf.extend_from_slice(b"\\r");
+                                    start = idx + 1;
+                                }
+                                _ => {}
                             }
-                            b'"' => {
-                                esc_buf.push(b'\\');
-                                esc_buf.push(b'"');
-                            }
-                            b'\r' => {
-                                esc_buf.push(b'\\');
-                                esc_buf.push(b'r');
-                            }
-                            b'\t' => {
-                                esc_buf.push(b'\\');
-                                esc_buf.push(b't');
-                            }
-                            b'\n' => {
-                                esc_buf.push(b'\\');
-                                esc_buf.push(b'n');
-                            }
-                            _ => esc_buf.push(*byte),
                         });
+                        if start < v.len() {
+                            esc_buf.extend_from_slice(&v[start..]);
+                        }
                         esc_buf.push(b'"');
                     }
                     buffered_writer.write(h.as_bytes()).better_expect(

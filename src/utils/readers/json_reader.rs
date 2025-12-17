@@ -2,6 +2,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use crate::utils::BetterExpect;
 
+#[inline]
 pub fn json_reader(
     path: &PathBuf,
     verbose: bool,

@@ -2,6 +2,7 @@ use std::{fs::File, io::BufReader};
 
 use crate::utils::{BetterExpect, DataTypes, WriterStreams};
 
+#[inline]
 pub fn json_decoder(
     reader: serde_json::Deserializer<serde_json::de::IoRead<BufReader<File>>>,
     verbose: bool,
