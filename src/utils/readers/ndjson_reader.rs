@@ -2,6 +2,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use crate::utils::BetterExpect;
 
+#[inline]
 pub fn ndjson_reader(path: &PathBuf, verbose: bool) -> BufReader<File> {
     let file = File::open(path).better_expect(
         format!(
