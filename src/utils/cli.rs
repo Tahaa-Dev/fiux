@@ -14,7 +14,7 @@ Fiox, a blazingly fast, streaming-first file handler.
 • Formats are detected automatically based on file extension.
 • Streams files instead of loading them into memory all at once.
 • Supports file conversions and file validation.
-• if there are any bugs or features you want, open an issue at [`https://github.com/tahamahmoud7097-wq/fiox`].
+• if there are any bugs or features you want, open an issue at [`https://github.com/Tahaa-Dev/fiox`].
 
 Examples:
    _________________________________________

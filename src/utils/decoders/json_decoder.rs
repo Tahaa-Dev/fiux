@@ -1,17 +1,21 @@
-use std::{fs::File, io::BufReader};
+use std::{
+    fs::File,
+    io::{BufReader, Error},
+};
 
-use crate::utils::{BetterExpect, DataTypes, WriterStreams};
+use resext::{CtxResult, ResExt};
+
+use crate::utils::{DataTypes, WriterStreams};
 
 #[inline]
 pub fn json_decoder(
     reader: serde_json::Deserializer<serde_json::de::IoRead<BufReader<File>>>,
     verbose: bool,
-) -> WriterStreams<impl Iterator<Item = DataTypes>> {
+) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>, Error> {
     let iter = reader.into_iter::<serde_json::Value>().map(move |obj| {
-        DataTypes::Json(
-            obj.better_expect("ERROR: Invalid JSON values in input JSON file.", verbose),
-        )
+        let obj = obj.context("Invalid JSON data in input file")?;
+        Ok(DataTypes::Json(obj))
     });
 
-    WriterStreams::Values { iter }
+    Ok(WriterStreams::Values { iter })
 }

@@ -1,15 +1,17 @@
 use std::{
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Error},
     iter::from_fn,
 };
 
-use crate::utils::{BetterExpect, DataTypes, WriterStreams};
+use resext::{CtxResult, ResExt};
+
+use crate::utils::{DataTypes, WriterStreams};
 
 pub fn ndjson_decoder(
     mut reader: BufReader<File>,
     verbose: bool,
-) -> WriterStreams<impl Iterator<Item = DataTypes>> {
+) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>, Error> {
     let mut buf = Vec::new();
     let mut line_no = 0usize;
 
@@ -17,8 +19,9 @@ pub fn ndjson_decoder(
         loop {
             line_no += 1;
             buf.clear();
-            let bytes = reader.read_until(b'\n', &mut buf).better_expect(
-                format!("ERROR: Failed to read line [{}] in input file.", line_no).as_str(),
+            let bytes = reader.read_until(b'\n', &mut buf).dyn_expect(
+                || format!("Failed to read line: {} in input file", line_no),
+                1,
                 verbose,
             );
 
@@ -33,16 +36,15 @@ pub fn ndjson_decoder(
                     continue;
                 };
 
-                return Some(DataTypes::Json(
-                    serde_json::from_slice(buf.as_slice()).better_expect(
-                        format!("ERROR: Invalid NDJSON at line [{}] in input file.", line_no)
-                            .as_str(),
-                        verbose,
-                    ),
-                ));
+                let ndjson_obj = serde_json::from_slice(buf.as_slice())
+                    .dyn_expect(|| 
+                        format!("Failed to deserialize input file\nInvalid NDJSON values in input file at line: {}", line_no), 1, verbose
+                    );
+
+                return Some(Ok(DataTypes::Json(ndjson_obj)));
             }
         }
     });
 
-    WriterStreams::Ndjson { values: iter }
+    Ok(WriterStreams::Ndjson { values: iter })
 }

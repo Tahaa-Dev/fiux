@@ -1,56 +1,40 @@
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::{BufReader, Error},
+    path::PathBuf,
+};
 
-use colored::Colorize;
+use resext::{CtxResult, ResExt};
 
-use crate::utils::BetterExpect;
+pub fn validate_csv(path: &PathBuf, verbose: bool) -> CtxResult<(), Error> {
+    let file = File::open(path)
+        .context("Failed to validate input file")
+        .context("Failed to open input file")?;
 
-pub fn validate_csv(path: &PathBuf, verbose: bool) {
-    let mut reader = csv::Reader::from_path(path).better_expect(
-        format!(
-            "ERROR: Couldn't read input file [{}] for validation.",
-            path.to_str().unwrap_or("[input.csv]")
-        )
-        .as_str(),
-        verbose,
-    );
+    let buf = BufReader::with_capacity(256 * 1024, file);
+
+    let mut reader = csv::Reader::from_reader(buf);
 
     let headers = reader
         .byte_headers()
-        .better_expect(
-            format!(
-                "ERROR: Couldn't get headers for input file [{}] for validation.",
-                path.to_str().unwrap_or("[input.csv]")
-            )
-            .as_str(),
-            verbose,
-        )
-        .clone();
+        .map_err(|_| Error::new(std::io::ErrorKind::InvalidData, "CSV file headers missing"))
+        .with_context(|| format!("Input file: {} is not valid", &path.to_string_lossy()))
+        .context("Failed to read input file headers");
 
-    let headers_len = headers.len();
+    if verbose {
+        headers
+            .context("CSV files are required to have valid headers for parsing and validation")?;
+    } else {
+        headers?;
+    }
 
-    reader.byte_records().enumerate().for_each(|(idx, rec)| {
-        let record = rec.better_expect(
-            format!(
-                "ERROR: Serialization error in input file [{}] at line [{}].",
-                path.to_str().unwrap_or("[input.csv]"),
-                idx + 2
-            )
-            .as_str(),
-            verbose,
-        );
+    for (idx, rec) in reader.byte_records().enumerate() {
+        rec.map_err(|_| Error::new(std::io::ErrorKind::InvalidData, "Invalid CSV in input file"))
+            .with_context(|| format!("Input file: {} is not valid", &path.to_string_lossy()))
+            .with_context(|| format!("Invalid CSV data at record: {}", idx + 1))?;
+    }
 
-        if record.len() != headers_len {
-            eprintln!(
-                "{}",
-                format!(
-                    "ERROR: Number of fields at line [{}] doesn't match the number of headers.",
-                    idx + 2
-                )
-                .as_str()
-                .red()
-                .bold()
-            );
-            std::process::exit(1);
-        }
-    });
+    println!("Input file: {} is valid", &path.to_string_lossy());
+
+    Ok(())
 }

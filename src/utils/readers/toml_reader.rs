@@ -1,24 +1,18 @@
 use std::path::PathBuf;
 
-use crate::utils::BetterExpect;
+use resext::ResExt;
 
 #[inline]
 pub fn toml_reader(path: &PathBuf, verbose: bool) -> toml::Value {
-    let file_bytes = std::fs::read(path).better_expect(
-        format!(
-            "ERROR: Couldn't read input TOML file [{}].",
-            path.to_str().unwrap_or("[input.toml]")
-        )
-        .as_str(),
+    let file_bytes = std::fs::read(path).dyn_expect(
+        || format!("Failed to read input file: {}", path.to_str().unwrap_or("[input.toml]")),
+        1,
         verbose,
     );
 
-    toml::from_slice::<toml::Value>(&file_bytes).better_expect(
-        format!(
-            "ERROR: Serialization error in input TOML file [{}].",
-            path.to_str().unwrap_or("[input.toml]")
-        )
-        .as_str(),
+    toml::from_slice::<toml::Value>(&file_bytes).dyn_expect(
+        || format!("Invalid TOML data in input file: {}", path.to_str().unwrap_or("[input.toml]")),
+        1,
         verbose,
     )
 }

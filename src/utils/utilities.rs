@@ -1,13 +1,12 @@
 use std::process::exit;
 
-use colored::Colorize;
-
 use csv::ByteRecord;
+use resext::CtxResult;
 use serde::Serialize;
 
 pub enum WriterStreams<I>
 where
-    I: Iterator<Item = DataTypes>,
+    I: Iterator<Item = CtxResult<DataTypes, std::io::Error>>,
 {
     Values { iter: I },
 
@@ -43,43 +42,6 @@ pub fn into_byte_record(brecord: DataTypes) -> ByteRecord {
     if let DataTypes::Csv(brec) = brecord { brec } else { ByteRecord::new() }
 }
 
-// Custom better expect trait for better error messages without duping code
-
-pub trait BetterExpect<T> {
-    fn better_expect(self, msg: &str, verbose: bool) -> T;
-}
-
-// impl for Result which matches the value to Ok to return the value or print the error msg in red if Err
-impl<T, E: std::fmt::Display> BetterExpect<T> for Result<T, E> {
-    fn better_expect(self, msg: &str, verbose: bool) -> T {
-        match self {
-            Ok(v) => v,
-            Err(_) if !verbose => {
-                eprintln!("{}", msg.red().bold());
-                exit(1);
-            }
-            Err(e) => {
-                eprintln!("{}\n{}", msg.red().bold(), e);
-                exit(1);
-            }
-        }
-    }
-}
-
-// impl for Option to match the value for Some to return the actual value and if None prints error msg in red
-
-impl<T> BetterExpect<T> for Option<T> {
-    fn better_expect(self, msg: &str, _verbose: bool) -> T {
-        match self {
-            Some(v) => v,
-            None => {
-                eprintln!("{}", msg.red().bold());
-                exit(1);
-            }
-        }
-    }
-}
-
 const NEEDS_ESCAPE: [bool; 256] = {
     let mut table = [false; 256];
     table[b'\\' as usize] = true;
@@ -90,6 +52,7 @@ const NEEDS_ESCAPE: [bool; 256] = {
     table
 };
 
+#[inline]
 pub fn escape(byte: u8, output: &mut Vec<u8>) {
     if NEEDS_ESCAPE[byte as usize] {
         output.reserve_exact(2);
