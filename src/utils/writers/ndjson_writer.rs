@@ -1,46 +1,74 @@
 use std::{
     fs::File,
-    io::{BufWriter, Write},
+    io::{BufWriter, Error, Write},
 };
 
+use resext::{CtxResult, ErrCtx, ResExt};
 use serde_json::Value;
 
-use crate::utils::{BetterExpect, DataTypes, WriterStreams, escape, into_byte_record};
+use crate::utils::{DataTypes, WriterStreams, escape, into_byte_record};
 
 #[inline]
 pub fn ndjson_writer(
-    data_stream: WriterStreams<impl Iterator<Item = DataTypes>>,
-    verbose: bool,
+    data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>,
     file: File,
     parse_numbers: bool,
-) {
+) -> CtxResult<(), Error> {
     let mut writer = BufWriter::new(file);
 
     match data_stream {
-        WriterStreams::Values { iter } | WriterStreams::Ndjson { values: iter } => {
-            iter.for_each(|item| {
-                let json =
-                    serde_json::to_value(item).better_expect("ERROR: Invalid input file.", verbose);
+        WriterStreams::Values { iter } => {
+            for (line_no, item) in iter.enumerate() {
+                let line_no = line_no + 1;
+                let json = serde_json::to_value(
+                    item.context("Failed to re-serialize record for writing").unwrap_or_else(
+                        |e: ErrCtx<Error>| {
+                            eprintln!("{e}");
+                            DataTypes::Json(serde_json::json!({}))
+                        },
+                    ),
+                )
+                .context("Failed to re-serialize record")
+                .context("Invalid NDJSON values")
+                .unwrap_or_else(|e: ErrCtx<serde_json::Error>| {
+                    eprintln!("{e}");
+                    serde_json::json!({})
+                });
 
                 if let Value::Array(arr) = json {
-                    arr.iter().enumerate().for_each(|(idx, obj)| {
-                        serde_json::to_writer(&mut writer, obj).better_expect(
-                            format!("ERROR: Failed to write object at line [{}].", idx + 1)
-                                .as_str(),
-                            verbose,
-                        );
+                    for (idx, obj) in arr.iter().enumerate() {
+                        let idx = idx + 1;
+                        serde_json::to_writer(&mut writer, obj)
+                            .map_err(|_| {
+                                Error::new(std::io::ErrorKind::WriteZero, "Failed to write")
+                            })
+                            .with_context(|| format!("FATAL: Failed to write object: {}", idx))?;
 
-                        writeln!(writer).better_expect(
+                        writeln!(writer).with_context(|| {
                             format!(
-                                "ERROR: Failed to write newline delimiter at line [{}].",
-                                idx + 1
+                                "FATAL: Failed to write newline delimiter after object: {}",
+                                idx
                             )
-                            .as_str(),
-                            verbose,
-                        );
-                    });
+                        })?;
+                    }
+                } else if let Value::Object(_) = json {
+                    serde_json::to_writer(&mut writer, &json)
+                        .map_err(|_| Error::new(std::io::ErrorKind::WriteZero, "Failed to write"))
+                        .with_context(|| {
+                            format!(
+                                "FATAL: Failed to write NDJSON object: {} into output file",
+                                line_no
+                            )
+                        })?;
+
+                    writeln!(writer).with_context(|| {
+                        format!(
+                            "FATAL: Failed to write newline delimiter after object: {}",
+                            line_no
+                        )
+                    })?;
                 }
-            });
+            }
         }
 
         WriterStreams::Table { headers, iter } => {
@@ -57,16 +85,22 @@ pub fn ndjson_writer(
                 })
                 .collect();
 
-            iter.for_each(|rec| {
-                writer.write(b"{").better_expect(
-                    "ERROR: Failed to write opening bracket for object into output file.",
-                    verbose,
-                );
+            for (line_no, rec) in iter.enumerate() {
+                let line_no = line_no + 1;
+                writer.write(b"{").with_context(|| format!(
+                    "FATAL: Failed to write opening curly brace for object: {} into output file", line_no
+                ))?;
 
                 let mut first_value = true;
 
-                let record = into_byte_record(rec);
-                headers.iter().zip(record.iter()).for_each(|(h, v)| {
+                let record = into_byte_record(rec)
+                    .context("Failed to re-serialize object for writing")
+                    .unwrap_or_else(|e: ErrCtx<Error>| {
+                        eprintln!("{e}");
+                        csv::ByteRecord::with_capacity(0, 0)
+                    });
+
+                for (idx, (h, v)) in headers.iter().zip(record.iter()).enumerate() {
                     esc_buf.clear();
                     if matches!(v, b"true" | b"false" | b"null")
                         || (parse_numbers
@@ -82,44 +116,59 @@ pub fn ndjson_writer(
                             escape(*byte, &mut esc_buf);
                         });
                         esc_buf.push(b'"');
-                    } 
-                    if first_value {
-                        writer.write_all(b"\"").better_expect("ERROR: Failed to write opening quote for key in key-value pair.", verbose);
+                    }
 
-                        writer.write_all(h.as_bytes()).better_expect(
-                            "ERROR: Failed to write key in key-value pair into output file.",
-                            verbose,
-                        );
+                    if first_value {
+                        writer.write_all(b"\"").with_context(|| format!("FATAL: Failed to write opening quote for key in key-value pair: {} in object: {} into output file", idx, line_no))?;
+
+                        writer.write_all(h.as_bytes()).with_context(|| format!("FATAL: Failed to write key in key-value pair: {} in object: {} into output file", idx, line_no))?;
 
                         first_value = false;
                     } else {
-                        writer.write_all(b", ").better_expect(
-                            "ERROR: Failed to write comma into output file.",
-                            verbose,
-                        );
+                        writer
+                            .write_all(b", ")
+                            .context("FATAL: Failed to write comma into output file")?;
 
-                        writer.write_all(b"\"").better_expect("ERROR: Failed to write opening quote for key in key-value pair.", verbose);
+                        writer.write_all(b"\"").with_context(|| format!("FATAL: Failed to write opening quote for key in key-value pair: {} in object: {} into output file", idx, line_no))?;
 
-                        writer.write_all(h.as_bytes()).better_expect(
-                            "ERROR: Failed to write key in key-value pair into output file.",
-                            verbose,
-                        );
+                        writer.write_all(h.as_bytes()).with_context(|| format!("FATAL: Failed to write key in key-value pair: {} in object: {} into output file", idx, line_no))?;
                     }
-                    writer.write_all(b"\"").better_expect("ERROR: Failed to write closing quote for key in key-value pair.", verbose);
+                    writer.write_all(b"\"").with_context(|| format!("FATAL: Failed to write closing quote for key in key-value pair: {} in object: {} into output file", idx, line_no))?;
 
-                    writer.write_all(b": ").better_expect("ERROR: Failed to write colon between key and value in key-value pair into output file.", verbose);
+                    writer
+                        .write_all(b": ")
+                        .context("FATAL: Failed to write colon into output file")?;
 
-                    writer.write_all(esc_buf.as_slice()).better_expect("ERROR: Failed to write value for key-value pair into output file.", verbose);
-                });
+                    writer.write_all(esc_buf.as_slice()).with_context(|| format!("FATAL: Failed to write value in key-value pair: {} in object: {} into output file", idx, line_no))?;
+                }
 
-                writer.write_all(b"}\n").better_expect("ERROR: Failed to write closing bracket and newline delimiter for object into output file.", verbose);
-            });
+                writer.write_all(b"}\n").with_context(|| format!(
+                    "FATAL: Failed to write closing curly brace and newline delimiter for object: {} into output file", line_no
+                ))?;
+            }
 
-            writer
-                .flush()
-                .better_expect("ERROR: Failed to flush final bytes into output file.", verbose);
+            writer.flush().context("FATAL: Failed to flush final bytes into output file")?;
+        }
+
+        WriterStreams::Ndjson { values } => {
+            for (line_no, item) in values.enumerate() {
+                let json = item
+                    .context("Failed to re-serialize record for writing")
+                    .unwrap_or_else(|e: ErrCtx<Error>| {
+                        eprintln!("{e}");
+                        DataTypes::Json(serde_json::json!({}))
+                    });
+
+                serde_json::to_writer(&mut writer, &json)
+                    .map_err(|_| Error::new(std::io::ErrorKind::WriteZero, "Failed to write"))
+                    .with_context(|| {
+                        format!("FATAL: Failed to write NDJSON object: {}", line_no + 1)
+                    })?;
+            }
         }
 
         _ => unreachable!(),
     }
+
+    Ok(())
 }

@@ -165,7 +165,7 @@ pub fn write_json(
                         .with_context(|| {
                             format!("FATAL: Failed to write record: {} into output JSON file", idx)
                         })
-                        .context(crate::VERBOSE_HELP)?;
+                        .context("Error might be caused by invalid NDJSON values in input file")?;
 
                     first = false;
                 } else {
@@ -181,7 +181,7 @@ pub fn write_json(
                         .with_context(|| {
                             format!("FATAL: Failed to write record: {} into output JSON file", idx)
                         })
-                        .context(crate::VERBOSE_HELP)?;
+                        .context("Error might be caused by invalid NDJSON values in input file")?;
                 }
             }
 
