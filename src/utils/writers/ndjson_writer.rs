@@ -29,7 +29,7 @@ pub fn ndjson_writer(
                     ),
                 )
                 .context("Failed to re-serialize record")
-                .context("Invalid NDJSON values")
+                .context("Invalid NDJSON values in input file")
                 .unwrap_or_else(|e: ErrCtx<serde_json::Error>| {
                     eprintln!("{e}");
                     serde_json::json!({})
@@ -166,8 +166,6 @@ pub fn ndjson_writer(
                     })?;
             }
         }
-
-        _ => unreachable!(),
     }
 
     Ok(())

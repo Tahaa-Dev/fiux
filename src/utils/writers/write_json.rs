@@ -42,7 +42,7 @@ pub fn write_json(
             let mut esc_buf: Vec<u8> = Vec::with_capacity(10);
 
             buffered_writer
-                .write_all(b"\n]")
+                .write_all(b"[\n")
                 .context("FATAL: Failed to write opening bracket into output file")?;
 
             let headers: Vec<String> = headers
@@ -189,8 +189,6 @@ pub fn write_json(
                 .write_all(b"\n]")
                 .context("FATAL: Failed to write closing bracket into output file")?;
         }
-
-        _ => unreachable!(),
     }
 
     Ok(())

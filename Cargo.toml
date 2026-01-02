@@ -1,9 +1,15 @@
 [package]
 name = "fiox"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
-[workspace.metadata.clippy]
-deny-warnings = true
+authors = ["Taha Mahmoud <tahamahmoud7097@gmail.com>"]
+categories = ["filesystem", "parsing", "command-line-utilities"]
+description = "The fastest multi-format file handling CLI tool"
+keywords = ["filesystem", "file-conversion", "file-handling", "cli"]
+license = "MIT"
+repository = "https://github.com/Tahaa-Dev/fiox"
+readme = "README.md"
+
 [dependencies]
 clap = { version = "4.5.53", features = ["derive"] }
 serde = "1.0.228"
