@@ -107,23 +107,34 @@ fn main() -> CtxResult<(), Error> {
             println!("Finished in {:?}", now.elapsed());
         }
 
-        Commands::Validate { input } => {
+        Commands::Validate { input, delimiter } => {
             // Check if input exists
             if !Path::new(&input).exists() {
                 eprintln!("ERROR: Input file doesn't exist for validation.");
                 exit(1);
             }
 
-            let input_ext: &str = &input
-                .extension()
-                .ok_or_else(|| Error::new(EK::InvalidFilename, "Input file has no extension"))
-                .context("Failed to get input file's extension")?
-                .to_string_lossy();
+            let i_d: char;
+
+            let temp_ext;
+            if let Some(ch) = delimiter {
+                temp_ext = std::borrow::Cow::Borrowed("csv");
+                i_d = *ch;
+            } else {
+                temp_ext = input
+                    .extension()
+                    .ok_or_else(|| Error::new(EK::InvalidFilename, "Output file has no extension"))
+                    .context("Failed to get output file's extension")?
+                    .to_string_lossy();
+                i_d = ',';
+            }
+
+            let input_ext: &str = &temp_ext;
 
             match input_ext {
                 "json" => json_validator::validate_json(input)?,
                 "toml" => toml_validator::validate_toml(input)?,
-                "csv" => csv_validator::validate_csv(input)?,
+                "csv" => csv_validator::validate_csv(input, i_d)?,
                 "ndjson" => ndjson_validator::validate_ndjson(input)?,
                 _ => {
                     let repo_link = "https://github.com/Tahaa-Dev/fiox";
@@ -134,7 +145,8 @@ fn main() -> CtxResult<(), Error> {
                     exit(1);
                 }
             };
-            println!("Input file [{}] is valid!", input.to_str().unwrap_or("inputFile"));
+
+            println!("Input file [{}] is valid!", input.to_str().unwrap_or("input"));
         }
     }
 

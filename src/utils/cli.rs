@@ -18,12 +18,13 @@ fiox: The fastest streaming-first file conveter.
   • if there are any bugs or any features you want, open an issue at: `https://github.com/Tahaa-Dev/fiox`.
 
 
-/———Examples——————————————————————————————\
-|                                     ••• |
-| fiox convert data.json out.csv          |
-| fiox validate broken.ndjson --verbose   |
-| fiox convert big.csv big.json --verbose |
-|_________________________________________|
+╭────────────────·Examples·────────────────╮
+│                                      ••• │
+│ fiox convert data.json out.csv           │
+│ fiox validate broken.ndjson --verbose    │
+│ fiox convert big.csv big.json --verbose  │
+│                                          │
+╰──────────────────────────────────────────╯
 "#
 )]
 pub struct FioxArgs {
@@ -35,11 +36,10 @@ pub struct FioxArgs {
     pub log_file: Option<PathBuf>,
 }
 
-/// Fiox subcommands
+/// fiox subcommands
 #[derive(Subcommand)]
 pub enum Commands {
     /// Convert command that takes two positional arguments for input and output, takes one
-    /// flag [`verbose`] which enables extra logs and soon backtraces.
     Convert {
         /// Argument for input file path
         #[arg(required = true, value_hint = FilePath)]
@@ -61,7 +61,7 @@ pub enum Commands {
         /// Argument for specifying delimiters for CSV / CSV-like input formats (e.g. TSV, PSV, etc.).
         /// This flag makes fiox ignore the extension and instead treat the file as a CSV
         /// with the specified delimiter instead of commas.
-        #[arg(short, long)]
+        #[arg(long)]
         input_delimiter: Option<char>,
 
         /// Argument for specifying delimiters for CSV / CSV-like output formats (e.g. TSV, PSV, etc.).
@@ -72,11 +72,15 @@ pub enum Commands {
     },
 
     /// Validate command for file format validation with one positional argument for the file
-    /// to be checked and a flag [`verbose`] which enables extra logs, backtraces (coming soon!) and exact
-    /// line errors.
     Validate {
         /// path to the file to be validated
         #[arg(required = true, value_hint = FilePath)]
         input: PathBuf,
+
+        /// Argument for specifying delimiters for CSV / CSV-like input formats (e.g. TSV, PSV, etc.).
+        /// This flag makes fiox ignore the extension and instead treat the file as a CSV
+        /// with the specified delimiter instead of commas.
+        #[arg(short, long)]
+        delimiter: Option<char>,
     },
 }

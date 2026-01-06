@@ -1,15 +1,23 @@
 use std::{fs::File, io::BufReader, path::PathBuf};
 
-use resext::{CtxResult, ResExt};
+use resext::{CtxResult, ResExt, throw_err_if};
 
-pub fn validate_csv(path: &PathBuf) -> CtxResult<(), std::io::Error> {
+pub fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<(), std::io::Error> {
     let file = File::open(path)
         .context("Failed to validate file")
         .with_context(|| format!("Failed to open input file: {}", &path.to_string_lossy()))?;
 
     let buf = BufReader::with_capacity(256 * 1024, file);
 
-    let mut reader = csv::Reader::from_reader(buf);
+    throw_err_if!(
+        !delimiter.is_ascii(),
+        || format!("FATAL: Input delimiter: {} is not valid UTF-8", delimiter),
+        1
+    );
+
+    let d = delimiter as u8;
+
+    let mut reader = csv::ReaderBuilder::new().delimiter(d).from_reader(buf);
 
     let mut res = Ok(());
 
