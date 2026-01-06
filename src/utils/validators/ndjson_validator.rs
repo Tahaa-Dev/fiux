@@ -7,7 +7,7 @@ use std::{
 use resext::{CtxResult, ResExt};
 use serde::de::IgnoredAny;
 
-pub fn validate_ndjson(path: &PathBuf) -> CtxResult<(), std::io::Error> {
+pub(crate) fn validate_ndjson(path: &PathBuf) -> CtxResult<(), std::io::Error> {
     let file = File::open(path)
         .context("Failed to validate file")
         .with_context(|| format!("Failed to open input file: {}", &path.to_string_lossy()))?;

@@ -5,7 +5,7 @@ use resext::{CtxResult, ResExt};
 /// Toml cannot be streamed so how validation for it works is by reading the whole file into memory
 /// then trying to serialize it and if it hits an error, it prints an error message like all other
 /// validators except for line numbers.
-pub fn validate_toml(path: &PathBuf) -> CtxResult<(), std::io::Error> {
+pub(crate) fn validate_toml(path: &PathBuf) -> CtxResult<(), std::io::Error> {
     let file_bytes = std::fs::read(path)
         .context("Failed to validate file")
         .with_context(|| format!("Failed to open input file: {}", &path.to_string_lossy()))?;

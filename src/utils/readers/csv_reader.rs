@@ -3,7 +3,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 use resext::{ResExt, throw_err_if};
 
 #[inline]
-pub fn csv_reader(path: &PathBuf, delimiter: char) -> csv::Reader<BufReader<File>> {
+pub(crate) fn csv_reader(path: &PathBuf, delimiter: char) -> csv::Reader<BufReader<File>> {
     let file = File::open(path).dyn_expect(
         || format!("FATAL: Couldn't open input file {}", path.to_str().unwrap_or("[input.csv]")),
         1,

@@ -5,7 +5,7 @@ use crate::utils::{DataTypes, WriterStreams, into_byte_record};
 use std::io::{BufWriter, Error};
 
 #[inline]
-pub fn csv_writer(
+pub(crate) fn csv_writer(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>,
     file: std::fs::File,
     delimiter: char,

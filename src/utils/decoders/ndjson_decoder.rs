@@ -8,7 +8,7 @@ use resext::{CtxResult, ResExt};
 
 use crate::utils::{DataTypes, WriterStreams};
 
-pub fn ndjson_decoder(
+pub(crate) fn ndjson_decoder(
     mut reader: BufReader<File>,
 ) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>, Error> {
     let mut buf = Vec::new();

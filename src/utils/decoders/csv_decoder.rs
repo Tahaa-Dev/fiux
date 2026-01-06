@@ -8,7 +8,7 @@ use resext::{CtxResult, ResExt};
 use crate::utils::{DataTypes, WriterStreams};
 
 #[inline]
-pub fn csv_decoder(
+pub(crate) fn csv_decoder(
     mut reader: csv::Reader<BufReader<File>>,
 ) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>, Error> {
     let headers = reader

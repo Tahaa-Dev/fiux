@@ -3,7 +3,7 @@ use serde::de::IgnoredAny;
 use serde_json::Deserializer;
 use std::{fs::File, io::BufReader, path::PathBuf};
 
-pub fn validate_json(path: &PathBuf) -> CtxResult<(), std::io::Error> {
+pub(crate) fn validate_json(path: &PathBuf) -> CtxResult<(), std::io::Error> {
     let file = File::open(path)
         .context("Failed to validate file")
         .with_context(|| format!("Failed to open input file: {}", &path.to_string_lossy()))?;

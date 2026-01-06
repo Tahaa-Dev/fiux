@@ -6,7 +6,7 @@ use toml::{Value, map::Map};
 use crate::utils::{DataTypes, WriterStreams, escape, into_byte_record};
 
 #[inline]
-pub fn toml_writer(
+pub(crate) fn toml_writer(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>,
     file: std::fs::File,
     parse_numbers: bool,

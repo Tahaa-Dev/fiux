@@ -2,12 +2,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueHint::FilePath};
 
-#[derive(Parser)]
-#[command(
-    author,
-    version,
-    about = "The fastest utility for converting between file formats.",
-    long_about = r#"
+static LONG_ABT: &str = r#"
 fiox: The fastest streaming-first file conveter.
 
   • Supports JSON, NDJSON, TOML, CSV, TSV, PSV and more!
@@ -25,20 +20,27 @@ fiox: The fastest streaming-first file conveter.
 │ fiox convert big.csv big.json --verbose  │
 │                                          │
 ╰──────────────────────────────────────────╯
-"#
+"#;
+
+#[derive(Parser)]
+#[command(
+    author,
+    version,
+    about = "The fastest utility for converting between file formats.",
+    long_about = LONG_ABT
 )]
-pub struct FioxArgs {
+pub(crate) struct FioxArgs {
     #[command(subcommand)]
-    pub cmd: Commands,
+    pub(crate) cmd: Commands,
 
     /// Argument for setting a Markdown (MD) file to export error logs to.
     #[arg(short, long, value_hint = FilePath, global = true)]
-    pub log_file: Option<PathBuf>,
+    pub(crate) log_file: Option<PathBuf>,
 }
 
 /// fiox subcommands
 #[derive(Subcommand)]
-pub enum Commands {
+pub(crate) enum Commands {
     /// Convert command that takes two positional arguments for input and output, takes one
     Convert {
         /// Argument for input file path

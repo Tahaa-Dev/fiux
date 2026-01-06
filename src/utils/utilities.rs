@@ -23,7 +23,7 @@ static LOGGER: LazyLock<Option<Mutex<BufWriter<File>>>> = LazyLock::new(|| {
     })
 });
 
-pub enum WriterStreams<I>
+pub(crate) enum WriterStreams<I>
 where
     I: Iterator<Item = CtxResult<DataTypes, Error>>,
 {
@@ -34,7 +34,7 @@ where
     Ndjson { values: I },
 }
 
-pub enum DataTypes {
+pub(crate) enum DataTypes {
     Json(serde_json::Value),
 
     Toml(toml::Value),
@@ -55,7 +55,7 @@ impl Serialize for DataTypes {
     }
 }
 
-pub fn into_byte_record(brec: CtxResult<DataTypes, Error>) -> CtxResult<ByteRecord, Error> {
+pub(crate) fn into_byte_record(brec: CtxResult<DataTypes, Error>) -> CtxResult<ByteRecord, Error> {
     match brec.context("Failed to unwrap record")? {
         DataTypes::Csv(csv) => Ok(csv),
         _ => unreachable!(),
@@ -73,7 +73,7 @@ static NEEDS_ESCAPE: [bool; 256] = {
 };
 
 #[inline]
-pub fn escape(byte: u8, output: &mut Vec<u8>) {
+pub(crate) fn escape(byte: u8, output: &mut Vec<u8>) {
     if NEEDS_ESCAPE[byte as usize] {
         output.reserve_exact(2);
         output.push(b'\\');
@@ -90,7 +90,7 @@ pub fn escape(byte: u8, output: &mut Vec<u8>) {
     }
 }
 
-pub fn log_err<E: std::error::Error>(err: &ErrCtx<E>) -> CtxResult<(), Error> {
+pub(crate) fn log_err<E: std::error::Error>(err: &ErrCtx<E>) -> CtxResult<(), Error> {
     if let Some(wtr) = &*LOGGER {
         let mut wtr = wtr
             .lock()
@@ -107,7 +107,7 @@ pub fn log_err<E: std::error::Error>(err: &ErrCtx<E>) -> CtxResult<(), Error> {
     Ok(())
 }
 
-pub fn flush_logger() -> CtxResult<(), Error> {
+pub(crate) fn flush_logger() -> CtxResult<(), Error> {
     if let Some(wtr) = &*LOGGER {
         wtr.lock()
             .map_err(|_| Error::other("Failed to lock"))

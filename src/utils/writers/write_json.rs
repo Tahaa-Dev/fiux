@@ -5,7 +5,7 @@ use resext::{CtxResult, ErrCtx, ResExt};
 use crate::utils::{DataTypes, WriterStreams, into_byte_record};
 
 #[inline]
-pub fn write_json(
+pub(crate) fn write_json(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>,
     file: std::fs::File,
     parse_numbers: bool,

@@ -2,7 +2,7 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use resext::{CtxResult, ResExt, throw_err_if};
 
-pub fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<(), std::io::Error> {
+pub(crate) fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<(), std::io::Error> {
     let file = File::open(path)
         .context("Failed to validate file")
         .with_context(|| format!("Failed to open input file: {}", &path.to_string_lossy()))?;

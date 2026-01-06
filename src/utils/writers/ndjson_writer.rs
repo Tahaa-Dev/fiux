@@ -9,7 +9,7 @@ use serde_json::Value;
 use crate::utils::{DataTypes, WriterStreams, escape, into_byte_record};
 
 #[inline]
-pub fn ndjson_writer(
+pub(crate) fn ndjson_writer(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>,
     file: File,
     parse_numbers: bool,

@@ -1,4 +1,4 @@
-pub mod csv_reader;
-pub mod json_reader;
-pub mod ndjson_reader;
-pub mod toml_reader;
+pub(crate) mod csv_reader;
+pub(crate) mod json_reader;
+pub(crate) mod ndjson_reader;
+pub(crate) mod toml_reader;

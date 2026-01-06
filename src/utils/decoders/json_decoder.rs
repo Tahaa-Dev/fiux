@@ -8,7 +8,7 @@ use resext::{CtxResult, ResExt};
 use crate::utils::{DataTypes, WriterStreams};
 
 #[inline]
-pub fn json_decoder(
+pub(crate) fn json_decoder(
     reader: serde_json::Deserializer<serde_json::de::IoRead<BufReader<File>>>,
 ) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>, Error> {
     let iter = reader.into_iter::<serde_json::Value>().map(move |obj| {
