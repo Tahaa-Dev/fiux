@@ -16,10 +16,9 @@ pub(crate) fn json_decoder(
             .map_err(|_| Error::new(EK::InvalidData, "Invalid JSON"))
             .context("Failed to deserialize file")
             .context("Invalid JSON data in input file");
-        if obj.is_err() {
-            Err(unsafe { obj.unwrap_err_unchecked() })
-        } else {
-            Ok(DataTypes::Json(unsafe { obj.unwrap_unchecked() }))
+        match obj {
+            Ok(ok) => Ok(DataTypes::Json(ok)),
+            Err(err) => Err(err),
         }
     });
 

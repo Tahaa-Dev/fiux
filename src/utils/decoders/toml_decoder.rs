@@ -14,10 +14,9 @@ pub(crate) fn toml_decoder(
             .context("Failed to deserialize file")
             .context("Invalid TOML values in input file");
 
-        if toml_val.is_err() {
-            Err(unsafe { toml_val.unwrap_err_unchecked() })
-        } else {
-            Ok(DataTypes::Toml(unsafe { toml_val.unwrap_unchecked() }))
+        match toml_val {
+            Ok(ok) => Ok(DataTypes::Toml(ok)),
+            Err(err) => Err(err),
         }
     });
 

@@ -25,10 +25,9 @@ pub(crate) fn csv_decoder(
             .context("Failed to deserialize file")
             .with_context(|| format!("Invalid CSV data in input file at line: {}", line_no + 1));
 
-        if record.is_err() {
-            Err(unsafe { record.unwrap_err_unchecked() })
-        } else {
-            Ok(DataTypes::Csv(unsafe { record.unwrap_unchecked() }))
+        match record {
+            Ok(ok) => Ok(DataTypes::Csv(ok)),
+            Err(err) => Err(err),
         }
     });
 
