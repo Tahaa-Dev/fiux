@@ -81,6 +81,7 @@ fiox convert <INPUT> --output <OUTPUT> -a
 | TOML → NDJSON | ~1.1s    | ~12s        | No native TOML support       |
 | NDJSON → JSON | ~310ms   | ~6.2s       | jq: ~2.65 \| Miller: ~2.88s  |
 | NDJSON → TOML | ~820ms   | ~10.8s      | No native TOML support       |
+
 As you can see from these benchmarks, ***fiox is much faster than most industry-standard file conversion tools***, fiox scales even better on better / server hardware! (using SSH)
 
 **Note:** TOML conversions are generally slower than other formats since TOML is very limited when it comes to streaming and parsing is slower as it is more complicated than other formats.
