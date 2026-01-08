@@ -1,6 +1,6 @@
 [package]
 name = "fiox"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 authors = ["Taha Mahmoud <tahamahmoud7097@gmail.com>"]
 categories = ["filesystem", "parsing", "command-line-utilities"]

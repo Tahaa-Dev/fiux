@@ -1,6 +1,9 @@
 # fiox
 
-**The *fastest* multi-format file handling CLI tool, built in *Rust***
+[![CI](https://github.com/Tahaa-Dev/fiox/workflows/CI/badge.svg)](https://github.com/Tahaa-Dev/fiox/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**The *fastest* multi-format file converter CLI tool.**
 
 - Supports **NDJSON**, **JSON**, **CSV**, **PSV**, **TSV**, **TOML** formats and more!
 
@@ -20,19 +23,13 @@
 
 ## Installation
 
-Clone the repository and build:
-
-```bash
-git clone https://github.com/Tahaa-Dev/fiox.git fiox
-
-cd fiox
-
-cargo build --release
-# optional: move binary to ~/.local/bin for convenience
-mv ~/fiox/target/release/fiox ~/.local/bin/fiox
+```sh
+cargo install fiox
+```
+```
 ```
 
-**Note:** This installation is temporary until I publish as a binary crate on **crates.io**.
+- And that's it! You've installed fiox!
 
 ---
 
@@ -53,22 +50,9 @@ fiox convert <INPUT> --output <OUTPUT> -a
 
 ---
 
-## Options (flags)
+### benchmarks
 
-| **Option (flag)**                               | **Functionality**                                                                                                                                                                          |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `-a`, `--append`                                | fiox overwrites existing data in files by default, this flag makes it append into the output file instead. **WARNING**: This flag can lead to unexpected output on some formats like JSON. |
-| `-p`, `--parse-numbers`                         | This flag only affects CSV -> non-tabular format conversions only. It makes it so that fiox infers types and doesn't quote (stringify) numbers.                                            |
-| `-o`, `--output`                                | Not an option, but is a flag you use to indicate which file is the output file.                                                                                                            |
-| `-l`, `--log-file`                              | Flag to log recoverable errors in a file (preferably Markdown) instead of printing to stderr                                                                                               |
-| `-i`, `--input-delimiter`, `--output-delimiter` | Flag to ignore extension and parse file / write output as CSV with the specified delimiter (e.g. PSV with '\|' as the delimiter)                                                           |
-
----
-### Benchmarks
-
-**Notes:** 
-- All of these benchmarks were done using the same file but converted to other formats using fiox which is a 100k rows with 6 fields per row CSV file with 3 text columns, 2 number columns and a column of dates.
-- All of these benchmarks were done using **hyperfine** on entry level hardware. (Ryzen 3 3100, 8GB of DDR3 RAM and a SATA SSD).
+Benchmarks were done with a 100k line CSV converted to other formats for consistency across benchmarks
 
 | **Benchmark** | **fiox** | **Node.js** | **Miller / jq (C)**          |
 | ------------- | -------- | ----------- | ---------------------------- |
@@ -87,6 +71,7 @@ As you can see from these benchmarks, ***fiox is much faster than most industry-
 **Note:** TOML conversions are generally slower than other formats since TOML is very limited when it comes to streaming and parsing is slower as it is more complicated than other formats.
 
 ---
+
 ### Plans
 
 - [x] Modularize readers and writers.
@@ -105,5 +90,4 @@ As you can see from these benchmarks, ***fiox is much faster than most industry-
 
 - fiox is licensed under the **MIT** license.
 - For specifics about contributing to fiox, see <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>.
-- For changes, see <a href="CHANGELOG.md">CHANGELOG.md</a>
-- fiox is still unstable and in heavy development, it's recommended that you only use fiox after v0.5.0 release.
+- For changes, see <a href="CHANGELOG.md">CHANGELOG.md</a>.

@@ -29,9 +29,9 @@ fiox: The fastest streaming-first file conveter.
     about = "The fastest utility for converting between file formats.",
     long_about = LONG_ABT
 )]
-pub(crate) struct FioxArgs {
+pub struct FioxArgs {
     #[command(subcommand)]
-    pub(crate) cmd: Commands,
+    pub cmd: Commands,
 
     /// Argument for setting a Markdown (MD) file to export error logs to.
     #[arg(short, long, value_hint = FilePath, global = true)]
@@ -40,7 +40,7 @@ pub(crate) struct FioxArgs {
 
 /// fiox subcommands
 #[derive(Subcommand)]
-pub(crate) enum Commands {
+pub enum Commands {
     /// Convert command that takes two positional arguments for input and output, takes one
     Convert {
         /// Argument for input file path

@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.0] - 2026-01-08
+
+### Added
+- Comprehensive test suite (7 unit tests + 9 integration tests)
+- GitHub Actions CI pipeline
+- Tests run on Ubuntu, macOS, and Windows
+- `--delimiter` flag for validators
+- Error logging to Markdown files with `--log-file`
+- Beautiful error messages with context chains and hints
+
+### Changed
+- All internal functions now `pub(crate)` for cleaner docs
+- Exit codes are semantic (0 = success, 1 = validation failure)
+- Removed all `unsafe` blocks (100% safe Rust)
+
+### Fixed
+- Improved error context chains
+- Better integration with parsing crates' error reporting (rust-csv, serde_json, toml and serde)
+
+---
+
 ## v0.4.0 - 2026-01-06
 
 ## Summary

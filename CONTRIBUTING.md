@@ -40,6 +40,7 @@ Thanks for your interest in contributing!
 - Include tests for new functionality
 - Update README if adding user-facing features
 - Describe what changed and why
+- More tests are always welcome for merging!
 
 ---
 
@@ -59,4 +60,4 @@ Open an issue or discussion. We're happy to help!
 
 ### License
 
-By contributing, you agree your contributions will be licensed under MIT.
+By contributing, you agree your contributions will be licensed under **MIT**.
