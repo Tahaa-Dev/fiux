@@ -1,8 +1,23 @@
 # Changelog
 
+## [0.5.2] - 2026-01-10
+
+### Added
+
+- Colored output using `owo-colors` crate
+- Cleaner (and more performant?) code in main.rs by separating run logic from the main function
+- Improved errors and error-handling
+
+### Changed
+
+No notable changes have been implemented for public APIs
+
+---
+
 ## [0.5.0] - 2026-01-08
 
 ### Added
+
 - Comprehensive test suite (7 unit tests + 9 integration tests)
 - GitHub Actions CI pipeline
 - Tests run on Ubuntu, macOS, and Windows
@@ -11,11 +26,13 @@
 - Beautiful error messages with context chains and hints
 
 ### Changed
+
 - All internal functions now `pub(crate)` for cleaner docs
 - Exit codes are semantic (0 = success, 1 = validation failure)
 - Removed all `unsafe` blocks (100% safe Rust)
 
 ### Fixed
+
 - Improved error context chains
 - Better integration with parsing crates' error reporting (rust-csv, serde_json, toml and serde)
 

@@ -1,6 +1,6 @@
 [package]
 name = "fiux"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2024"
 authors = ["Taha Mahmoud <tahamahmoud7097@gmail.com>"]
 categories = ["filesystem", "parsing", "command-line-utilities"]

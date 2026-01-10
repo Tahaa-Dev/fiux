@@ -26,8 +26,6 @@
 ```sh
 cargo install fiux
 ```
-```
-```
 
 - And that's it! You've installed fiux!
 
@@ -56,33 +54,19 @@ Benchmarks were done with a 100k line CSV converted to other formats for consist
 
 | **Benchmark** | **fiux** | **Node.js** | **Miller / jq (C)**          |
 | ------------- | -------- | ----------- | ---------------------------- |
-| CSV → JSON    | ~109ms   | ~1.29s      | Miller: ~603ms               |
-| CSV → TOML    | ~111ms   | ~1.6s       | No native TOML support       |
-| JSON → TOML   | ~1.1s    | ~8.7s       | No native TOML support       |
+| CSV → JSON    | ~95ms   | ~1.29s      | Miller: ~603ms               |
+| CSV → TOML    | ~101ms   | ~1.6s       | No native TOML support       |
+| JSON → TOML   | ~888ms    | ~8.7s       | No native TOML support       |
 | TOML → JSON   | ~862ms   | ~9s         | No native TOML support       |
-| CSV → NDJSON  | ~107ms   | ~1.2s       | Miller: ~2.85s               |
+| CSV → NDJSON  | ~97ms   | ~1.2s       | Miller: ~2.85s               |
 | JSON → NDJSON | ~750ms   | ~6s         | jq: ~2.77s \| Miller: ~2.92s |
-| TOML → NDJSON | ~1.1s    | ~12s        | No native TOML support       |
+| TOML → NDJSON | ~921ms    | ~12s        | No native TOML support       |
 | NDJSON → JSON | ~310ms   | ~6.2s       | jq: ~2.65 \| Miller: ~2.88s  |
 | NDJSON → TOML | ~820ms   | ~10.8s      | No native TOML support       |
 
 As you can see from these benchmarks, ***fiux is much faster than most industry-standard file conversion tools***, fiux scales even better on better / server hardware! (using SSH)
 
 **Note:** TOML conversions are generally slower than other formats since TOML is very limited when it comes to streaming and parsing is slower as it is more complicated than other formats.
-
----
-
-### Plans
-
-- [x] Modularize readers and writers.
-- [x] Add clap for help and subcommand / flag support.
-- [x] Add a flag for better debugging.
-- [x] Add a validation subcommand.
-- [x] Implement streaming for all commands (except TOML).
-- [ ] Add support for more formats (in progress).
-- [ ] Add parallelization for processing using rayon.
-- [ ] Add more subcommands for more flexibility.
-- [ ] Publish as a binary crate on **crates.io**.
 
 ---
 
