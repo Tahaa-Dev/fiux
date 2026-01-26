@@ -124,7 +124,7 @@ fn run() -> CtxResult<(), Error> {
             output_delimiter,
         } => {
             // Check if input exists
-            throw_err_if!(
+            panic_if!(
                 !Path::new(&input).exists(),
                 || format!(
                     "{} {} {} {}",
@@ -205,7 +205,7 @@ fn run() -> CtxResult<(), Error> {
         }
 
         Commands::Validate { input, delimiter } => {
-            throw_err_if!(
+            panic_if!(
                 !Path::new(&input).exists(),
                 || format!(
                     "{} {} {} {}",

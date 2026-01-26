@@ -1,7 +1,7 @@
 <h1 align="center">fiux</h1>
 
-[<img alt="crates.io" src="https://img.shields.io/crates/v/fiux.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/resext)
-[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-fiux-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/resext)
+[<img alt="crates.io" src="https://img.shields.io/crates/v/fiux.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/fiux)
+[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-fiux-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/fiux)
 [![CI](https://github.com/Tahaa-Dev/fiux/workflows/CI/badge.svg)](https://github.com/Tahaa-Dev/fiux/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

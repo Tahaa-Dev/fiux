@@ -1,6 +1,6 @@
 use std::{fs::File, io::BufReader, path::PathBuf};
 
-use resext::{ResExt, throw_err_if};
+use resext::{ResExt, panic_if};
 
 #[inline]
 pub(crate) fn csv_reader(path: &PathBuf, delimiter: char) -> csv::Reader<BufReader<File>> {
@@ -12,7 +12,7 @@ pub(crate) fn csv_reader(path: &PathBuf, delimiter: char) -> csv::Reader<BufRead
 
     let buffered_reader = BufReader::with_capacity(256 * 1024, file);
 
-    throw_err_if!(
+    panic_if!(
         !delimiter.is_ascii(),
         || format!("Input delimiter: {} is not valid UTF-8", delimiter),
         1

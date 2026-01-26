@@ -1,4 +1,4 @@
-use resext::{CtxResult, ErrCtx, ResExt, throw_err_if};
+use resext::{CtxResult, ErrCtx, ResExt, panic_if};
 
 use crate::utils::{DataTypes, WriterStreams, into_byte_record};
 
@@ -12,7 +12,7 @@ pub(crate) fn csv_writer(
 ) -> CtxResult<(), Error> {
     let buffered = BufWriter::new(file);
 
-    throw_err_if!(
+    panic_if!(
         !delimiter.is_ascii(),
         || format!("Output delimiter: {} is not valid UTF-8", delimiter),
         1

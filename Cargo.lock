@@ -341,9 +341,9 @@ checksum = "5276caf25ac86c8d810222b3dbb938e512c55c6831a10f3e6ed1c93b84041f1c"
 
 [[package]]
 name = "resext"
-version = "0.6.2"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07ea755abb31dc2e7d4c34218ffccc16feb6a6463bf0e050c324e0d7a5783f17"
+checksum = "9f33afce80da663774ace3984587808f466c470f9395a7b61f756c27142a9699"
 
 [[package]]
 name = "rustix"

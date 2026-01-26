@@ -1,6 +1,6 @@
 use std::{fs::File, io::BufReader, path::PathBuf};
 
-use resext::{CtxResult, ResExt, throw_err_if};
+use resext::{CtxResult, ResExt, panic_if};
 
 pub(crate) fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<(), std::io::Error> {
     let file = File::open(path)
@@ -9,7 +9,7 @@ pub(crate) fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<(), std
 
     let buf = BufReader::with_capacity(256 * 1024, file);
 
-    throw_err_if!(
+    panic_if!(
         !delimiter.is_ascii(),
         || format!("Input delimiter: {} is not valid UTF-8", delimiter),
         1
