@@ -1,7 +1,7 @@
 use std::io::Error;
 
 use csv::ByteRecord;
-use resext::{CtxResult, ResExt};
+
 use serde::Serialize;
 
 pub(crate) enum WriterStreams<I>

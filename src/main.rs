@@ -100,7 +100,7 @@ fiux validate input.psv -d '|'
 mod utils;
 use clap::Parser;
 use owo_colors::OwoColorize;
-use resext::*;
+
 use std::fs::OpenOptions;
 use std::io::{Error, ErrorKind as EK};
 use std::path::Path;
@@ -261,7 +261,7 @@ fn main() {
     match run() {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("{} {}", "FATAL:".red().bold(), e);
+            eprintln!("{} {}", "[FATAL]".red().bold(), e);
             exit(1);
         }
     }

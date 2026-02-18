@@ -1,22 +1,18 @@
 use std::{fs::File, io::BufReader, path::PathBuf};
 
-use resext::{ResExt, panic_if};
-
 #[inline]
 pub(crate) fn csv_reader(path: &PathBuf, delimiter: char) -> csv::Reader<BufReader<File>> {
-    let file = File::open(path).dyn_expect(
-        || format!("Couldn't open input file {}", path.to_str().unwrap_or("[input.csv]")),
-        1,
-        true,
-    );
+    let file = File::open(path).unwrap_or_else(|e| {
+        eprintln!("Failed to open input file\nError: {}", e);
+        std::process::exit(1);
+    });
 
     let buffered_reader = BufReader::with_capacity(256 * 1024, file);
 
-    panic_if!(
-        !delimiter.is_ascii(),
-        || format!("Input delimiter: {} is not valid UTF-8", delimiter),
-        1
-    );
+    if !delimiter.is_ascii() {
+        eprintln!("Input delimiter: {} is not valid UTF-8", delimiter);
+        std::process::exit(1);
+    }
 
     let d = delimiter as u8;
 

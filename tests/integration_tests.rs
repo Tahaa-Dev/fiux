@@ -1,5 +1,5 @@
 use assert_cmd::{assert::OutputAssertExt, cargo};
-use resext::{CtxResult, ResExt};
+
 use std::{fs, io::Error, process::Command};
 use tempfile::Builder;
 

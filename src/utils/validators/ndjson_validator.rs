@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use resext::{CtxResult, ResExt};
+
 use serde::de::IgnoredAny;
 
 pub(crate) fn validate_ndjson(path: &PathBuf) -> CtxResult<(), std::io::Error> {
