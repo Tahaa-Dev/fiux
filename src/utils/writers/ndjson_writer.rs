@@ -118,19 +118,25 @@ pub(crate) fn ndjson_writer(
                     }
 
                     if first_value {
-                        write!(&mut writer, "\"{}\": ", &h).with_context(|| format!("Failed to write key in record: {}", line_no))?;
+                        write!(&mut writer, "\"{}\": ", &h).with_context(|| {
+                            format!("Failed to write key in record: {}", line_no)
+                        })?;
 
                         first_value = false;
                     } else {
-                        write!(&mut writer, ", \"{}\": ", &h).with_context(|| format!("Failed to write key in record: {}", line_no))?;
+                        write!(&mut writer, ", \"{}\": ", &h).with_context(|| {
+                            format!("Failed to write key in record: {}", line_no)
+                        })?;
                     }
 
-                    writer.write_all(esc_buf.as_slice()).with_context(|| format!("Failed to write value in record: {}", line_no))?;
+                    writer
+                        .write_all(esc_buf.as_slice())
+                        .with_context(|| format!("Failed to write value in record: {}", line_no))?;
                 }
 
-                writer.write_all(b"}\n").with_context(|| format!(
-                    "Failed to write closing curly brace for record: {}", line_no
-                ))?;
+                writer.write_all(b"}\n").with_context(|| {
+                    format!("Failed to write closing curly brace for record: {}", line_no)
+                })?;
             }
 
             writer.flush().context("Failed to flush final bytes into output file")?;

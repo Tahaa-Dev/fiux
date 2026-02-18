@@ -104,23 +104,18 @@ pub(crate) fn write_json(
                         esc_buf.push(b'"');
                     }
                     if first_value {
-                        write!(&mut buffered_writer, "    \"{}\": ", &h).with_context(|| {
-                            format!("Failed to write key in record: {}", line)
-                        })?;
+                        write!(&mut buffered_writer, "    \"{}\": ", &h)
+                            .with_context(|| format!("Failed to write key in record: {}", line))?;
 
                         first_value = false;
                     } else {
-                        write!(&mut buffered_writer, ",\n    \"{}\": ", &h).with_context(|| {
-                            format!("Failed to write key in record: {}", line)
-                        })?;
+                        write!(&mut buffered_writer, ",\n    \"{}\": ", &h)
+                            .with_context(|| format!("Failed to write key in record: {}", line))?;
                     }
 
-                    buffered_writer.write_all(esc_buf.as_slice()).with_context(|| {
-                        format!(
-                            "Failed to write value in record: {}",
-                            line
-                        )
-                    })?;
+                    buffered_writer
+                        .write_all(esc_buf.as_slice())
+                        .with_context(|| format!("Failed to write value in record: {}", line))?;
                 }
 
                 buffered_writer.write_all(b"\n  }").with_context(|| {

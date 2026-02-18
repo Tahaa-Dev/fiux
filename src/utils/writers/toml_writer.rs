@@ -122,16 +122,12 @@ pub(crate) fn toml_writer(
                         esc_buf.push(b'"');
                     }
 
-                    write!(&mut buffered_writer, "{} = ", &h).with_context(|| {
-                        format!("Failed to write key in record: {}", line_no)
-                    })?;
+                    write!(&mut buffered_writer, "{} = ", &h)
+                        .with_context(|| format!("Failed to write key in record: {}", line_no))?;
 
-                    buffered_writer.write_all(esc_buf.as_slice()).with_context(|| {
-                        format!(
-                            "Failed to write value in record: {}",
-                            line_no
-                        )
-                    })?;
+                    buffered_writer
+                        .write_all(esc_buf.as_slice())
+                        .with_context(|| format!("Failed to write value in record: {}", line_no))?;
 
                     writeln!(&mut buffered_writer).context("Failed to write newline")?;
                 }
