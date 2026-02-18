@@ -103,9 +103,7 @@ pub(crate) fn toml_writer(
                         csv::ByteRecord::with_capacity(0, 0)
                     });
 
-                for (idx, (h, v)) in headers.iter().zip(record.iter()).enumerate() {
-                    let idx = idx + 1;
-
+                for (h, v) in headers.iter().zip(record.iter()) {
                     esc_buf.clear();
 
                     if matches!(v, b"true" | b"false")
@@ -123,30 +121,19 @@ pub(crate) fn toml_writer(
                         });
                         esc_buf.push(b'"');
                     }
-                    buffered_writer.write_all(h.as_bytes()).with_context(|| {
-                        format!(
-                            "Failed to write key for key-value pair: {} in record: {}",
-                            idx, line_no
-                        )
-                    })?;
 
-                    buffered_writer.write_all(b" = ").with_context(|| {
-                        format!(
-                            "Failed to write '=' for key-value pair: {} in record: {}",
-                            idx, line_no
-                        )
+                    write!(&mut buffered_writer, "{} = ", &h).with_context(|| {
+                        format!("Failed to write key in record: {}", line_no)
                     })?;
 
                     buffered_writer.write_all(esc_buf.as_slice()).with_context(|| {
                         format!(
-                            "Failed to write value for key-value pair: {} in record: {}",
-                            idx, line_no
+                            "Failed to write value in record: {}",
+                            line_no
                         )
                     })?;
 
-                    buffered_writer
-                        .write_all(b"\n")
-                        .context("Failed to write a newline into output file")?;
+                    writeln!(&mut buffered_writer).context("Failed to write newline")?;
                 }
             }
 

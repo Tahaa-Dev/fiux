@@ -98,8 +98,9 @@ pub(crate) fn ndjson_writer(
                         csv::ByteRecord::with_capacity(0, 0)
                     });
 
-                for (idx, (h, v)) in headers.iter().zip(record.iter()).enumerate() {
+                for (h, v) in headers.iter().zip(record.iter()) {
                     esc_buf.clear();
+
                     if matches!(v, b"true" | b"false" | b"null")
                         || (parse_numbers
                             && v.first()
@@ -117,29 +118,18 @@ pub(crate) fn ndjson_writer(
                     }
 
                     if first_value {
-                        writer.write_all(b"\"").with_context(|| format!("Failed to write opening quote for key in key-value pair: {} in object: {} into output file", idx, line_no))?;
-
-                        writer.write_all(h.as_bytes()).with_context(|| format!("Failed to write key in key-value pair: {} in object: {} into output file", idx, line_no))?;
+                        write!(&mut writer, "\"{}\": ", &h).with_context(|| format!("Failed to write key in record: {}", line_no))?;
 
                         first_value = false;
                     } else {
-                        writer
-                            .write_all(b", ")
-                            .context("Failed to write comma into output file")?;
-
-                        writer.write_all(b"\"").with_context(|| format!("Failed to write opening quote for key in key-value pair: {} in object: {} into output file", idx, line_no))?;
-
-                        writer.write_all(h.as_bytes()).with_context(|| format!("Failed to write key in key-value pair: {} in object: {} into output file", idx, line_no))?;
+                        write!(&mut writer, ", \"{}\": ", &h).with_context(|| format!("Failed to write key in record: {}", line_no))?;
                     }
-                    writer.write_all(b"\"").with_context(|| format!("Failed to write closing quote for key in key-value pair: {} in object: {} into output file", idx, line_no))?;
 
-                    writer.write_all(b": ").context("Failed to write colon into output file")?;
-
-                    writer.write_all(esc_buf.as_slice()).with_context(|| format!("Failed to write value in key-value pair: {} in object: {} into output file", idx, line_no))?;
+                    writer.write_all(esc_buf.as_slice()).with_context(|| format!("Failed to write value in record: {}", line_no))?;
                 }
 
                 writer.write_all(b"}\n").with_context(|| format!(
-                    "Failed to write closing curly brace and newline delimiter for object: {} into output file", line_no
+                    "Failed to write closing curly brace for record: {}", line_no
                 ))?;
             }
 

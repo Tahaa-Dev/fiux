@@ -35,8 +35,6 @@ pub(crate) fn write_json(
         }
 
         WriterStreams::Table { headers, iter } => {
-            // buffer for escapijg values which will get cleared after each value and
-            // reused instead of allocating a new `Vec<u8>` for every value
             let mut esc_buf: Vec<u8> = Vec::with_capacity(10);
 
             buffered_writer
@@ -65,6 +63,7 @@ pub(crate) fn write_json(
                             line
                         )
                     })?;
+
                     first_obj = false;
                 } else {
                     buffered_writer.write_all(b",\n  {\n").with_context(|| {
@@ -85,9 +84,9 @@ pub(crate) fn write_json(
                         csv::ByteRecord::with_capacity(0, 0)
                     });
 
-                for (idx, (h, v)) in headers.iter().zip(record.iter()).enumerate() {
+                for (h, v) in headers.iter().zip(record.iter()) {
                     esc_buf.clear();
-                    let idx = idx + 1;
+
                     if matches!(v, b"true" | b"false" | b"null")
                         || (parse_numbers
                             && v.first()
@@ -105,34 +104,21 @@ pub(crate) fn write_json(
                         esc_buf.push(b'"');
                     }
                     if first_value {
-                        buffered_writer
-                            .write(b"    \"")
-                            .with_context(|| format!("Failed to write quotes for key: {} for record: {} into output file", idx, line))?;
+                        write!(&mut buffered_writer, "    \"{}\": ", &h).with_context(|| {
+                            format!("Failed to write key in record: {}", line)
+                        })?;
+
                         first_value = false;
                     } else {
-                        buffered_writer
-                            .write(b",\n    \"")
-                            .with_context(|| format!("Failed to write quotes for key: {} for record: {} into output file", idx, line))?;
+                        write!(&mut buffered_writer, ",\n    \"{}\": ", &h).with_context(|| {
+                            format!("Failed to write key in record: {}", line)
+                        })?;
                     }
-
-                    buffered_writer.write_all(h.as_bytes()).with_context(|| {
-                        format!(
-                            "Failed to write key: {} for record: {} into output file",
-                            idx, line
-                        )
-                    })?;
-
-                    buffered_writer.write_all(b"\": ").with_context(|| {
-                        format!(
-                            "Failed to write quotes for key: {} for record: {} into output file",
-                            idx, line
-                        )
-                    })?;
 
                     buffered_writer.write_all(esc_buf.as_slice()).with_context(|| {
                         format!(
-                            "Failed to write field: {} for record: {} into output file",
-                            idx, line
+                            "Failed to write value in record: {}",
+                            line
                         )
                     })?;
                 }
@@ -144,6 +130,7 @@ pub(crate) fn write_json(
                     )
                 })?;
             }
+
             buffered_writer
                 .write_all(b"\n]")
                 .context("Failed to write closing bracket into output file")?;

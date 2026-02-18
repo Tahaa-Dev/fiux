@@ -23,12 +23,10 @@ pub(crate) fn csv_writer(
 
     match data_stream {
         WriterStreams::Table { headers, iter } => {
-            // write headers
             wtr.write_record(&headers)
                 .map_err(|_| Error::other("Failed to write headers"))
                 .context("Failed to write headers into output file")?;
 
-            // write records
             for (line_no, line) in iter.enumerate() {
                 let b = into_byte_record(line)
                     .context("Failed to re-serialize object for writing")
@@ -37,12 +35,12 @@ pub(crate) fn csv_writer(
                             .unwrap_or_else(|err| eprintln!("{}\n{}", err, &e));
                         csv::ByteRecord::from(vec![b""; headers.len()])
                     });
+
                 wtr.write_record(&b)
                     .map_err(|_| Error::other("Failed to write CSV record"))
                     .with_context(|| format!("Failed to write CSV record at: {}", line_no + 1))?;
             }
 
-            // flush writer
             wtr.flush()
                 .map_err(|_| Error::other("Failed to flush"))
                 .context("Failed to flush final bytes into output file")?;
