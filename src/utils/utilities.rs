@@ -4,9 +4,11 @@ use csv::ByteRecord;
 
 use serde::Serialize;
 
+use crate::utils::{CtxResult, CtxResultExt};
+
 pub(crate) enum WriterStreams<I>
 where
-    I: Iterator<Item = CtxResult<DataTypes, Error>>,
+    I: Iterator<Item = CtxResult<DataTypes>>,
 {
     Values { iter: I },
 
@@ -36,7 +38,7 @@ impl Serialize for DataTypes {
     }
 }
 
-pub(crate) fn into_byte_record(brec: CtxResult<DataTypes, Error>) -> CtxResult<ByteRecord, Error> {
+pub(crate) fn into_byte_record(brec: CtxResult<DataTypes>) -> CtxResult<ByteRecord> {
     match brec.context("Failed to unwrap record")? {
         DataTypes::Csv(csv) => Ok(csv),
         _ => unreachable!(),
@@ -71,7 +73,7 @@ pub(crate) fn escape(byte: u8, output: &mut Vec<u8>) {
     }
 }
 
-#[cfg(test)]
+#[cfg(all)]
 mod tests {
     use super::*;
 

@@ -16,7 +16,11 @@ pub(crate) fn ndjson_decoder(
         loop {
             line_no += 1;
             buf.clear();
-            let bytes = reader.read_until(b'\n', &mut buf).context(format_args!("Failed to read line: {}", line_no)).log("[WARN]").unwrap_or(None);
+            let bytes = reader
+                .read_until(b'\n', &mut buf)
+                .context(format_args!("Failed to read line: {}", line_no))
+                .log("[WARN]")
+                .unwrap_or(None);
 
             if bytes == Some(0) {
                 return None;
@@ -34,9 +38,10 @@ pub(crate) fn ndjson_decoder(
                 let ndjson_obj = serde_json::from_slice(buf.as_slice())
                     .map_err(|_| Error::new(std::io::ErrorKind::InvalidData, "Invalid NDJSON"))
                     .context("Failed to deserialize file")
-                    .context(
-                        format_args!("Invalid NDJSON values in input file at line: {}", line_no)
-                    );
+                    .context(format_args!(
+                        "Invalid NDJSON values in input file at line: {}",
+                        line_no
+                    ));
                 return match ndjson_obj {
                     Ok(ok) => Some(Ok(DataTypes::Json(ok))),
                     Err(err) => Some(Err(err)),

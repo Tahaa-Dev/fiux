@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-
-
 /// Toml cannot be streamed so how validation for it works is by reading the whole file into memory
 /// then trying to serialize it and if it hits an error, it prints an error message like all other
 /// validators except for line numbers.

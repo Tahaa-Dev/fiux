@@ -27,18 +27,17 @@ static LOGGER: LazyLock<Mutex<Logger>> = LazyLock::new(|| {
 
     match args.log_file {
         Some(path) => {
-            let res = OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open(path);
+            let res = OpenOptions::new().create(true).write(true).truncate(true).open(path);
 
             match res {
                 Ok(file) => Mutex::new(Logger::File(BufWriter::with_capacity(64 * 1024, file))),
                 Err(err) => {
                     eprintln!("{} {}", "[WARN]".yellow(), err);
 
-                    Mutex::new(Logger::Stdout(BufWriter::with_capacity(64 * 1024, std::io::stdout())))
+                    Mutex::new(Logger::Stdout(BufWriter::with_capacity(
+                        64 * 1024,
+                        std::io::stdout(),
+                    )))
                 }
             }
         }
@@ -64,26 +63,38 @@ impl std::io::Write for Logger {
 }
 
 pub trait Log<T> {
-    fn log(self, level: &str) -> CtxResult<Option<T>>;
+    fn log(self, level: &str) -> Option<T>;
 }
 
 impl<T> Log<T> for CtxResult<T> {
-    fn log(self, level: &str) -> CtxResult<Option<T>> {
+    fn log(self, level: &str) -> Option<T> {
         match self {
-            Ok(ok) => Ok(Some(ok)),
+            Ok(ok) => Some(ok),
             Err(err) => {
-                let mut wtr = LOGGER.lock().map_err(|e| std::io::Error::other(format!("{}", e))).context("Failed to lock logger")?;
+                let mut wtr = LOGGER
+                    .lock()
+                    .map_err(|e| std::io::Error::other(format!("{}", e)))
+                    .context("Failed to lock logger")?;
 
-                write!(&mut wtr, "{} {}", level.yellow(), err).context("Failed to write log")?;
+                let res =
+                    write!(&mut wtr, "{} {}", level.yellow(), err).context("Failed to write log");
 
-                Ok(None)
+                match res {
+                    Ok(_) => {}
+                    Err(err) => eprintln!("{}", err),
+                }
+
+                None
             }
         }
     }
 }
 
 pub fn flush_logger(msg: &str) -> CtxResult<()> {
-    let mut wtr = LOGGER.lock().map_err(|e| std::io::Error::other(format!("{}", e))).context("Failed to lock logger")?;
+    let mut wtr = LOGGER
+        .lock()
+        .map_err(|e| std::io::Error::other(format!("{}", e)))
+        .context("Failed to lock logger")?;
 
     write!(&mut wtr, "{}", msg).context("Failed to write status message")?;
 
