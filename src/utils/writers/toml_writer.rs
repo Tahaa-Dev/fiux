@@ -1,60 +1,54 @@
-use std::io::{BufWriter, Error, Write};
+use std::io::{BufWriter, Write};
 
 use toml::{Value, map::Map};
 
-use crate::utils::{DataTypes, WriterStreams, escape, into_byte_record};
+use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, escape, into_byte_record};
 
 #[inline]
 pub(crate) fn toml_writer(
-    data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>,
+    data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     file: std::fs::File,
     parse_numbers: bool,
-) -> CtxResult<(), Error> {
+) -> CtxResult<()> {
+
     let mut buffered_writer = BufWriter::new(file);
 
     match data_stream {
+
         WriterStreams::Values { iter } => {
             for item in iter {
                 let obj = Value::try_from(
-                    item.context("Failed to re-serialize object for writing").unwrap_or_else(
-                        |e: ErrCtx<Error>| {
-                            crate::utils::log_err(&e)
-                                .unwrap_or_else(|err| eprintln!("{}\n{}", err, &e));
-                            DataTypes::Toml(Value::Table(Map::new()))
-                        },
-                    ),
+                    item.context("Failed to re-serialize object")
+                    .log("[WARN]")
+                    .unwrap_or_else(|| DataTypes::Json(serde_json::json!({})))
                 )
-                .context("Failed to re-serialize object for writing")
-                .context("Invalid TOML values in input file")
-                .unwrap_or_else(|e: ErrCtx<toml::ser::Error>| {
-                    crate::utils::log_err(&e).unwrap_or_else(|err| eprintln!("{}\n{}", err, &e));
-
-                    Value::Table(Map::new())
-                });
+                    .context("Failed to re-serialize object")
+                    .log("[WARN]")
+                    .unwrap_or_else(|| Value::Table(Map::new()));
 
                 if let Value::Array(_) = obj {
                     let mut map = Map::with_capacity(1);
+
                     map.insert("Array".to_string(), obj);
 
                     buffered_writer.write_all(toml::to_string_pretty(&Value::Table(map))
-                        .map_err(|e| Error::new(std::io::ErrorKind::OutOfMemory, format!("Failed to allocate String of valid TOML values for writing\nCaused by: {}", e)))
-                        .context("Failed to serialize valid TOML table")
-                        .context("This error was caused by an internal error")?
+                        .context("Failed to serialize TOML table")?
                         .as_bytes()
                     )
-                        .context("Failed to write TOML table into output file")?;
+                        .context("Failed to write TOML table")?;
+
                 } else {
+
                     buffered_writer.write_all(toml::to_string_pretty(&obj)
-                        .map_err(|e| Error::new(std::io::ErrorKind::OutOfMemory, format!("Failed to allocate String of valid TOML values for writing\nCaused by: {}", e)))
-                        .context("Failed to serialize valid TOML table")
-                        .context("This error was caused by an internal error")?
+                        .context("Failed to serialize TOML table")?
                         .as_bytes()
                     )
-                        .context("Failed to write TOML table into output file")?;
+                        .context("Failed to write TOML table")?;
                 }
             }
-            buffered_writer.flush().context("Failed to flush final bytes into output file")?;
+            buffered_writer.flush().context("Failed to flush writer")?;
         }
+
         WriterStreams::Table { headers, iter } => {
             let mut esc_buf: Vec<u8> = Vec::with_capacity(10);
 
@@ -83,24 +77,23 @@ pub(crate) fn toml_writer(
             for (line_no, rec) in iter.enumerate() {
                 let line_no = line_no + 1;
                 if !first_row {
-                    buffered_writer.write_all(b"\n[[Rows]]\n").with_context(|| {
-                        format!("Failed to write array key for row: {}", line_no)
-                    })?;
+                    buffered_writer.write_all(b"\n[[Rows]]\n").context(
+                        format_args!("Failed to write key for row: {}", line_no)
+                    )?;
+
                 } else {
-                    buffered_writer.write_all(b"[[Rows]]\n").with_context(|| {
-                        format!("Failed to write array key for row: {}", line_no)
-                    })?;
+
+                    buffered_writer.write_all(b"[[Rows]]\n").context(
+                        format_args!("Failed to write key for row: {}", line_no)
+                    )?;
+
                     first_row = false;
                 }
 
                 let record = into_byte_record(rec)
-                    .context("Failed to re-serialize object for writing")
-                    .unwrap_or_else(|e: ErrCtx<Error>| {
-                        crate::utils::log_err(&e)
-                            .unwrap_or_else(|err| eprintln!("{}\n{}", err, &e));
-
-                        csv::ByteRecord::with_capacity(0, 0)
-                    });
+                    .context("Failed to re-serialize object")
+                    .log("[WARN]")
+                    .unwrap_or_default();
 
                 for (h, v) in headers.iter().zip(record.iter()) {
                     esc_buf.clear();
@@ -122,17 +115,17 @@ pub(crate) fn toml_writer(
                     }
 
                     write!(&mut buffered_writer, "{} = ", &h)
-                        .with_context(|| format!("Failed to write key in record: {}", line_no))?;
+                        .context(format_args!("Failed to write key in record: {}", line_no))?;
 
                     buffered_writer
                         .write_all(esc_buf.as_slice())
-                        .with_context(|| format!("Failed to write value in record: {}", line_no))?;
+                        .context(format_args!("Failed to write value in record: {}", line_no))?;
 
                     writeln!(&mut buffered_writer).context("Failed to write newline")?;
                 }
             }
 
-            buffered_writer.flush().context("Failed to flush final bytes into output file")?;
+            buffered_writer.flush().context("Failed to flush writer")?;
         }
 
         WriterStreams::Ndjson { values } => {
@@ -141,33 +134,24 @@ pub(crate) fn toml_writer(
                 let rec_no = rec_no + 1;
 
                 let obj = Value::try_from(
-                    rec.context("Failed to re-serialize object for writing").unwrap_or_else(
-                        |e: ErrCtx<Error>| {
-                            crate::utils::log_err(&e)
-                                .unwrap_or_else(|err| eprintln!("{}\n{}", err, &e));
-
-                            DataTypes::Toml(Value::Table(Map::new()))
-                        },
-                    ),
+                    rec.context("Failed to re-serialize object")
+                    .log("[WARN]")
+                    .unwrap_or_else(|| DataTypes::Json(serde_json::json!({})))
                 )
-                .context("Failed to re-serialize object for writing")
-                .context("Invalid TOML values in input file")
-                .unwrap_or_else(|e: ErrCtx<toml::ser::Error>| {
-                    crate::utils::log_err(&e).unwrap_or_else(|err| eprintln!("{}\n{}", err, &e));
-
-                    Value::Table(Map::new())
-                });
+                    .context("Failed to re-serialize object")
+                    .log("[WARN]")
+                    .unwrap_or_else(|| Value::Table(Map::new()));
 
                 if first {
                     buffered_writer
                         .write_all(b"[[Array]]\n")
-                        .with_context(|| format!("Failed to write array key: {}", rec_no))?;
+                        .context(format_args!("Failed to write array key: {}", rec_no))?;
 
                     first = false;
                 } else {
                     buffered_writer
                         .write_all(b"\n[[Array]]\n")
-                        .with_context(|| format!("Failed to write array key: {}", rec_no))?;
+                        .context(format_args!("Failed to write array key: {}", rec_no))?;
                 }
 
                 if let Value::Array(_) = obj {
@@ -175,23 +159,19 @@ pub(crate) fn toml_writer(
                     map.insert("Array".to_string(), obj);
 
                     buffered_writer.write_all(toml::to_string_pretty(&Value::Table(map))
-                        .map_err(|e| Error::new(std::io::ErrorKind::OutOfMemory, format!("Failed to allocate String of valid TOML values for writing\nCaused by: {}", e)))
-                        .context("Failed to serialize valid TOML table")
-                        .context("This error was caused by an internal error")?
+                        .context("Failed to serialize TOML table")?
                         .as_bytes()
                     )
-                        .context("Failed to write TOML table into output file")?;
+                        .context("Failed to write TOML table")?;
                 } else {
                     buffered_writer.write_all(toml::to_string_pretty(&obj)
-                        .map_err(|e| Error::new(std::io::ErrorKind::OutOfMemory, format!("Failed to allocate String of valid TOML values for writing\nCaused by: {}", e)))
-                        .context("Failed to serialize valid TOML table")
-                        .context("This error was caused by an internal error")?
+                        .context("Failed to serialize valid TOML table")?
                         .as_bytes()
                     )
-                        .context("Failed to write TOML table into output file")?;
+                        .context("Failed to write TOML table")?;
                 }
 
-                buffered_writer.flush().context("Failed to flush final bytes into output file")?;
+                buffered_writer.flush().context("Failed to flush writer")?;
             }
         }
     }

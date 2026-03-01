@@ -55,10 +55,9 @@ pub(crate) fn write_json(
 
                     first_obj = false;
                 } else {
-                    buffered_writer.write_all(b",\n  {\n").context(format_args!(
-                        "Failed to write bracket for record: {}",
-                        line
-                    ))?;
+                    buffered_writer
+                        .write_all(b",\n  {\n")
+                        .context(format_args!("Failed to write bracket for record: {}", line))?;
                 }
 
                 let mut first_value = true;
@@ -122,8 +121,10 @@ pub(crate) fn write_json(
             for (idx, obj) in values.enumerate() {
                 let idx = idx + 1;
 
-                let obj =
-                    obj.context("Failed to re-serialize object").log("[WARN]").unwrap_or_else(|| DataTypes::Json(serde_json::json!({})));
+                let obj = obj
+                    .context("Failed to re-serialize object")
+                    .log("[WARN]")
+                    .unwrap_or_else(|| DataTypes::Json(serde_json::json!({})));
 
                 if first {
                     serde_json::to_writer_pretty(&mut buffered_writer, &obj)

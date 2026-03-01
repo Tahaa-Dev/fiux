@@ -25,7 +25,7 @@ enum Logger {
 static LOGGER: LazyLock<Mutex<Logger>> = LazyLock::new(|| {
     let args = &*crate::ARGS;
 
-    match args.log_file {
+    match &args.log_file {
         Some(path) => {
             let res = OpenOptions::new().create(true).write(true).truncate(true).open(path);
 
@@ -71,10 +71,16 @@ impl<T> Log<T> for CtxResult<T> {
         match self {
             Ok(ok) => Some(ok),
             Err(err) => {
-                let mut wtr = LOGGER
-                    .lock()
-                    .map_err(|e| std::io::Error::other(format!("{}", e)))
-                    .context("Failed to lock logger")?;
+                let wtr = LOGGER
+                    .lock();
+
+                let mut wtr = match wtr {
+                    Ok(ok) => ok,
+                    Err(err) => {
+                        eprintln!("{}", err);
+                        return None;
+                    }
+                };
 
                 let res =
                     write!(&mut wtr, "{} {}", level.yellow(), err).context("Failed to write log");
