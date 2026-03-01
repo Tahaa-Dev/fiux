@@ -1,17 +1,18 @@
 use std::{fs::File, io::BufReader, path::PathBuf};
 
-pub(crate) fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<(), std::io::Error> {
+use crate::utils::{CtxResult, CtxResultErr, CtxResultExt, Log};
+
+pub(crate) fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<()> {
     let file = File::open(path)
         .context("Failed to validate file")
-        .with_context(|| format!("Failed to open input file: {}", &path.to_string_lossy()))?;
+        .context(format_args!("Failed to open file: {}", &path.to_string_lossy()))?;
 
     let buf = BufReader::with_capacity(256 * 1024, file);
 
-    panic_if!(
-        !delimiter.is_ascii(),
-        || format!("Input delimiter: {} is not valid UTF-8", delimiter),
-        1
-    );
+    if !delimiter.is_ascii() {
+        eprintln!("Input delimiter: {} is not valid UTF-8", delimiter);
+        std::process::exit(1);
+    }
 
     let d = delimiter as u8;
 
@@ -21,28 +22,17 @@ pub(crate) fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<(), std
 
     reader
         .byte_headers()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{e}")))
-        .with_context(|| format!("Input file: {} is invalid", &path.to_string_lossy()))
-        .context("Failed to read input file headers")
-        .context("CSV files are required to have valid headers for parsing and validation")?;
+        .context(format_args!("Input file: {} is invalid", &path.to_string_lossy()))
+        .context("Failed to read input file headers")?;
 
     for (idx, rec) in reader.byte_records().enumerate() {
-        rec.with_context(|| format!("Invalid CSV data at record: {}", idx + 1)).unwrap_or_else(
-            |e: resext::ErrCtx<csv::Error>| {
-                crate::utils::log_err(&e).unwrap_or_else(|err| eprintln!("{}\n{}", err, &e));
+        let opt = rec.context(format_args!("Invalid CSV data at record: {}", idx + 1))
+            .log("[WARN]")
+            .is_none();
 
-                if res.is_ok() {
-                    res = Err(resext::ErrCtx::new(
-                        std::io::Error::new(
-                            std::io::ErrorKind::InvalidData,
-                            "Invalid CSV in input file",
-                        ),
-                        b"Input file is invalid".to_vec(),
-                    ));
-                }
-                csv::ByteRecord::default()
-            },
-        );
+        if opt && res.is_ok() {
+            res = Err(CtxResultErr::new("Input file is invalid", String::from("Invalid CSV data")));
+        }
     }
 
     res

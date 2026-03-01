@@ -15,6 +15,7 @@ pub enum FiuxErr {
     TomlSerialize(toml::ser::Error),
     Csv(csv::Error),
     IoError(Error),
+    Custom(String),
 }
 
 enum Logger {
