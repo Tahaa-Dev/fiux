@@ -10,7 +10,7 @@ use crate::utils::{
 };
 
 #[inline]
-pub(crate) fn ndjson_writer(
+pub fn ndjson_writer(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     file: File,
     parse_numbers: bool,
@@ -32,27 +32,19 @@ pub(crate) fn ndjson_writer(
                 .unwrap_or_default();
 
                 if let Value::Array(arr) = json {
-
                     for (idx, obj) in arr.iter().enumerate() {
                         let idx = idx + 1;
 
                         serde_json::to_writer(&mut writer, obj)
                             .context(format_args!("Failed to write object: {}", idx))?;
 
-                        writeln!(writer).context(
-                            "Failed to write newline"
-                        )?;
+                        writeln!(writer).context("Failed to write newline")?;
                     }
-
                 } else if let Value::Object(_) = json {
                     serde_json::to_writer(&mut writer, &json)
-                        .context(
-                            format_args!("Failed to write object: {}", line_no)
-                        )?;
+                        .context(format_args!("Failed to write object: {}", line_no))?;
 
-                    writeln!(writer).context(
-                        "Failed to write newline"
-                    )?;
+                    writeln!(writer).context("Failed to write newline")?;
                 }
             }
         }
@@ -72,15 +64,11 @@ pub(crate) fn ndjson_writer(
                 .collect();
 
             for (line_no, rec) in iter.enumerate() {
-
                 let line_no = line_no + 1;
 
-                writer.write(b"{").context(
-                    format_args!(
-                        "Failed to write bracket for object: {}",
-                        line_no
-                    )
-                )?;
+                writer
+                    .write(b"{")
+                    .context(format_args!("Failed to write bracket for object: {}", line_no))?;
 
                 let mut first_value = true;
 
@@ -109,15 +97,13 @@ pub(crate) fn ndjson_writer(
                     }
 
                     if first_value {
-                        write!(&mut writer, "\"{}\": ", &h).context(
-                            format_args!("Failed to write key in record: {}", line_no)
-                        )?;
+                        write!(&mut writer, "\"{}\": ", &h)
+                            .context(format_args!("Failed to write key in record: {}", line_no))?;
 
                         first_value = false;
                     } else {
-                        write!(&mut writer, ", \"{}\": ", &h).context(
-                            format_args!("Failed to write key in record: {}", line_no)
-                        )?;
+                        write!(&mut writer, ", \"{}\": ", &h)
+                            .context(format_args!("Failed to write key in record: {}", line_no))?;
                     }
 
                     writer
@@ -125,9 +111,10 @@ pub(crate) fn ndjson_writer(
                         .context(format_args!("Failed to write value in record: {}", line_no))?;
                 }
 
-                writer.write_all(b"}\n").context( 
-                    format_args!("Failed to write closing curly brace for record: {}", line_no)
-                )?;
+                writer.write_all(b"}\n").context(format_args!(
+                    "Failed to write closing curly brace for record: {}",
+                    line_no
+                ))?;
             }
 
             writer.flush().context("Failed to flush writer")?;

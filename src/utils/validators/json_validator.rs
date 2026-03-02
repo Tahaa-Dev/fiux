@@ -2,10 +2,12 @@ use serde::de::IgnoredAny;
 use serde_json::Deserializer;
 use std::{fs::File, io::BufReader, path::PathBuf};
 
-pub(crate) fn validate_json(path: &PathBuf) -> CtxResult<(), std::io::Error> {
+use crate::utils::{CtxResult, CtxResultErr, CtxResultExt, Log};
+
+pub fn validate_json(path: &PathBuf) -> CtxResult<()> {
     let file = File::open(path)
         .context("Failed to validate file")
-        .with_context(|| format!("Failed to open input file: {}", &path.to_string_lossy()))?;
+        .context(format_args!("Failed to open file: {}", &path.to_string_lossy()))?;
 
     let reader = BufReader::with_capacity(256 * 1024, file);
 
@@ -14,23 +16,12 @@ pub(crate) fn validate_json(path: &PathBuf) -> CtxResult<(), std::io::Error> {
     let mut res = Ok(());
 
     for item in file_stream {
-        item.with_context(|| {
-            format!("Invalid JSON data in input file: {}", &path.to_string_lossy())
-        })
-        .unwrap_or_else(|e: resext::ErrCtx<serde_json::Error>| {
-            crate::utils::log_err(&e).unwrap_or_else(|err| eprintln!("{}\n{}", err, &e));
+        let opt = item.context("Invalid JSON values").log("[WARN]").is_none();
 
-            if res.is_ok() {
-                res = Err(resext::ErrCtx::new(
-                    std::io::Error::new(
-                        std::io::ErrorKind::InvalidData,
-                        "Invalid JSON in input file",
-                    ),
-                    b"Input file is invalid".to_vec(),
-                ));
-            }
-            IgnoredAny
-        });
+        if opt && res.is_ok() {
+            res =
+                Err(CtxResultErr::new("Input file is invalid", String::from("Invalid JSON data")));
+        }
     }
 
     res

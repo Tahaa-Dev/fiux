@@ -72,8 +72,7 @@ impl<T> Log<T> for CtxResult<T> {
         match self {
             Ok(ok) => Some(ok),
             Err(err) => {
-                let wtr = LOGGER
-                    .lock();
+                let wtr = LOGGER.lock();
 
                 let mut wtr = match wtr {
                     Ok(ok) => ok,

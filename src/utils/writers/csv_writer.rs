@@ -3,7 +3,7 @@ use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, into_
 use std::io::BufWriter;
 
 #[inline]
-pub(crate) fn csv_writer(
+pub fn csv_writer(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     file: std::fs::File,
     delimiter: char,

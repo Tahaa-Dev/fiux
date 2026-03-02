@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::utils::{CtxResult, CtxResultExt};
 
-pub(crate) enum WriterStreams<I>
+pub enum WriterStreams<I>
 where
     I: Iterator<Item = CtxResult<DataTypes>>,
 {
@@ -17,7 +17,7 @@ where
     Ndjson { values: I },
 }
 
-pub(crate) enum DataTypes {
+pub enum DataTypes {
     Json(serde_json::Value),
 
     Toml(toml::Value),
@@ -38,7 +38,7 @@ impl Serialize for DataTypes {
     }
 }
 
-pub(crate) fn into_byte_record(brec: CtxResult<DataTypes>) -> CtxResult<ByteRecord> {
+pub fn into_byte_record(brec: CtxResult<DataTypes>) -> CtxResult<ByteRecord> {
     match brec.context("Failed to unwrap record")? {
         DataTypes::Csv(csv) => Ok(csv),
         _ => unreachable!(),
@@ -56,7 +56,7 @@ static NEEDS_ESCAPE: [bool; 256] = {
 };
 
 #[inline]
-pub(crate) fn escape(byte: u8, output: &mut Vec<u8>) {
+pub fn escape(byte: u8, output: &mut Vec<u8>) {
     if NEEDS_ESCAPE[byte as usize] {
         output.reserve_exact(2);
         output.push(b'\\');

@@ -6,10 +6,12 @@ use std::{
 
 use serde::de::IgnoredAny;
 
-pub(crate) fn validate_ndjson(path: &PathBuf) -> CtxResult<(), std::io::Error> {
+use crate::utils::{CtxResult, CtxResultErr, CtxResultExt, Log};
+
+pub fn validate_ndjson(path: &PathBuf) -> CtxResult<()> {
     let file = File::open(path)
         .context("Failed to validate file")
-        .with_context(|| format!("Failed to open input file: {}", &path.to_string_lossy()))?;
+        .context(format_args!("Failed to open file: {}", &path.to_string_lossy()))?;
 
     let mut reader = BufReader::with_capacity(256 * 1024, file);
 
@@ -22,7 +24,7 @@ pub(crate) fn validate_ndjson(path: &PathBuf) -> CtxResult<(), std::io::Error> {
         // check for line reading errors
         let n = reader
             .read_until(b'\n', &mut buf)
-            .with_context(|| format!("Failed to read line: {} in input file", idx))?;
+            .context(format_args!("Failed to read line: {}", idx))?;
 
         // check for EOF
         if n == 0 {
@@ -30,22 +32,15 @@ pub(crate) fn validate_ndjson(path: &PathBuf) -> CtxResult<(), std::io::Error> {
         };
 
         // check line validity
-        serde_json::from_slice::<IgnoredAny>(&buf)
-            .with_context(|| format!("Invalid NDJSON values in input file at line: {}", idx))
-            .unwrap_or_else(|e: resext::ErrCtx<serde_json::Error>| {
-                crate::utils::log_err(&e).unwrap_or_else(|err| eprintln!("{}\n{}", err, &e));
+        let opt = serde_json::from_slice::<IgnoredAny>(&buf)
+            .context(format_args!("Invalid NDJSON values at line: {}", idx))
+            .log("[WARN]")
+            .is_none();
 
-                if res.is_ok() {
-                    res = Err(resext::ErrCtx::new(
-                        std::io::Error::new(
-                            std::io::ErrorKind::InvalidData,
-                            "Invalid NDJSON in input file",
-                        ),
-                        b"Input file is invalid".to_vec(),
-                    ));
-                }
-                IgnoredAny
-            });
+        if opt && res.is_ok() {
+            res = Err(CtxResultErr::new("Input file is invalid", String::from("Invalid NDJSON data")));
+        }
+
         buf.clear();
         idx += 1;
     }

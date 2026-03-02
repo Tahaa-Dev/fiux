@@ -3,7 +3,7 @@ use std::io::{BufWriter, Write};
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, into_byte_record};
 
 #[inline]
-pub(crate) fn write_json(
+pub fn write_json(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     file: std::fs::File,
     parse_numbers: bool,

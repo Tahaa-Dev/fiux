@@ -3,7 +3,7 @@ use std::{fs::File, io::BufReader};
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, WriterStreams};
 
 #[inline]
-pub(crate) fn csv_decoder(
+pub fn csv_decoder(
     mut reader: csv::Reader<BufReader<File>>,
 ) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>> {
     let headers = reader

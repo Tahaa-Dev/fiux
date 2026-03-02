@@ -6,7 +6,7 @@ use std::{
 
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams};
 
-pub(crate) fn ndjson_decoder(
+pub fn ndjson_decoder(
     mut reader: BufReader<File>,
 ) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>> {
     let mut buf = Vec::new();
@@ -36,10 +36,7 @@ pub(crate) fn ndjson_decoder(
 
                 let ndjson_obj = serde_json::from_slice(buf.as_slice())
                     .context("Failed to deserialize file")
-                    .context(format_args!(
-                        "Invalid NDJSON values at line: {}",
-                        line_no
-                    ));
+                    .context(format_args!("Invalid NDJSON values at line: {}", line_no));
                 return match ndjson_obj {
                     Ok(ok) => Some(Ok(DataTypes::Json(ok))),
                     Err(err) => Some(Err(err)),

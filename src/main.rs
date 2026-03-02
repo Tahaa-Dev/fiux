@@ -108,7 +108,7 @@ use std::process::exit;
 use std::sync::LazyLock;
 use utils::*;
 
-pub(crate) static ARGS: LazyLock<Args> = LazyLock::new(Args::parse);
+pub static ARGS: LazyLock<Args> = LazyLock::new(Args::parse);
 
 #[inline]
 fn run() -> CtxResult<(), Error> {

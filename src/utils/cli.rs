@@ -35,7 +35,7 @@ pub struct Args {
 
     /// Argument for setting a Markdown (MD) file to export error logs to.
     #[arg(short, long, value_hint = FilePath, global = true)]
-    pub(crate) log_file: Option<PathBuf>,
+    pub log_file: Option<PathBuf>,
 }
 
 /// fiux subcommands

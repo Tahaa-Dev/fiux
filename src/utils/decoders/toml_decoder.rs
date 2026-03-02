@@ -1,7 +1,7 @@
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, WriterStreams};
 
 #[inline]
-pub(crate) fn toml_decoder(
+pub fn toml_decoder(
     content: Vec<u8>,
 ) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>> {
     let iter = [content].into_iter().map(move |c| {

@@ -1,7 +1,7 @@
 use std::{fs::File, io::BufReader, path::PathBuf};
 
 #[inline]
-pub(crate) fn json_reader(
+pub fn json_reader(
     path: &PathBuf,
 ) -> serde_json::Deserializer<serde_json::de::IoRead<BufReader<File>>> {
     let file = File::open(path).unwrap_or_else(|e| {

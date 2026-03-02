@@ -2,47 +2,49 @@ use std::io::{BufWriter, Write};
 
 use toml::{Value, map::Map};
 
-use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, escape, into_byte_record};
+use crate::utils::{
+    CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, escape, into_byte_record,
+};
 
 #[inline]
-pub(crate) fn toml_writer(
+pub fn toml_writer(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     file: std::fs::File,
     parse_numbers: bool,
 ) -> CtxResult<()> {
-
     let mut buffered_writer = BufWriter::new(file);
 
     match data_stream {
-
         WriterStreams::Values { iter } => {
             for item in iter {
                 let obj = Value::try_from(
                     item.context("Failed to re-serialize object")
-                    .log("[WARN]")
-                    .unwrap_or_else(|| DataTypes::Json(serde_json::json!({})))
+                        .log("[WARN]")
+                        .unwrap_or_else(|| DataTypes::Json(serde_json::json!({}))),
                 )
-                    .context("Failed to re-serialize object")
-                    .log("[WARN]")
-                    .unwrap_or_else(|| Value::Table(Map::new()));
+                .context("Failed to re-serialize object")
+                .log("[WARN]")
+                .unwrap_or_else(|| Value::Table(Map::new()));
 
                 if let Value::Array(_) = obj {
                     let mut map = Map::with_capacity(1);
 
                     map.insert("Array".to_string(), obj);
 
-                    buffered_writer.write_all(toml::to_string_pretty(&Value::Table(map))
-                        .context("Failed to serialize TOML table")?
-                        .as_bytes()
-                    )
+                    buffered_writer
+                        .write_all(
+                            toml::to_string_pretty(&Value::Table(map))
+                                .context("Failed to serialize TOML table")?
+                                .as_bytes(),
+                        )
                         .context("Failed to write TOML table")?;
-
                 } else {
-
-                    buffered_writer.write_all(toml::to_string_pretty(&obj)
-                        .context("Failed to serialize TOML table")?
-                        .as_bytes()
-                    )
+                    buffered_writer
+                        .write_all(
+                            toml::to_string_pretty(&obj)
+                                .context("Failed to serialize TOML table")?
+                                .as_bytes(),
+                        )
                         .context("Failed to write TOML table")?;
                 }
             }
@@ -77,15 +79,13 @@ pub(crate) fn toml_writer(
             for (line_no, rec) in iter.enumerate() {
                 let line_no = line_no + 1;
                 if !first_row {
-                    buffered_writer.write_all(b"\n[[Rows]]\n").context(
-                        format_args!("Failed to write key for row: {}", line_no)
-                    )?;
-
+                    buffered_writer
+                        .write_all(b"\n[[Rows]]\n")
+                        .context(format_args!("Failed to write key for row: {}", line_no))?;
                 } else {
-
-                    buffered_writer.write_all(b"[[Rows]]\n").context(
-                        format_args!("Failed to write key for row: {}", line_no)
-                    )?;
+                    buffered_writer
+                        .write_all(b"[[Rows]]\n")
+                        .context(format_args!("Failed to write key for row: {}", line_no))?;
 
                     first_row = false;
                 }
@@ -135,12 +135,12 @@ pub(crate) fn toml_writer(
 
                 let obj = Value::try_from(
                     rec.context("Failed to re-serialize object")
-                    .log("[WARN]")
-                    .unwrap_or_else(|| DataTypes::Json(serde_json::json!({})))
+                        .log("[WARN]")
+                        .unwrap_or_else(|| DataTypes::Json(serde_json::json!({}))),
                 )
-                    .context("Failed to re-serialize object")
-                    .log("[WARN]")
-                    .unwrap_or_else(|| Value::Table(Map::new()));
+                .context("Failed to re-serialize object")
+                .log("[WARN]")
+                .unwrap_or_else(|| Value::Table(Map::new()));
 
                 if first {
                     buffered_writer
@@ -158,16 +158,20 @@ pub(crate) fn toml_writer(
                     let mut map = Map::with_capacity(1);
                     map.insert("Array".to_string(), obj);
 
-                    buffered_writer.write_all(toml::to_string_pretty(&Value::Table(map))
-                        .context("Failed to serialize TOML table")?
-                        .as_bytes()
-                    )
+                    buffered_writer
+                        .write_all(
+                            toml::to_string_pretty(&Value::Table(map))
+                                .context("Failed to serialize TOML table")?
+                                .as_bytes(),
+                        )
                         .context("Failed to write TOML table")?;
                 } else {
-                    buffered_writer.write_all(toml::to_string_pretty(&obj)
-                        .context("Failed to serialize valid TOML table")?
-                        .as_bytes()
-                    )
+                    buffered_writer
+                        .write_all(
+                            toml::to_string_pretty(&obj)
+                                .context("Failed to serialize valid TOML table")?
+                                .as_bytes(),
+                        )
                         .context("Failed to write TOML table")?;
                 }
 
