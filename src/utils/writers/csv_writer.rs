@@ -2,7 +2,6 @@ use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, into_
 
 use std::io::BufWriter;
 
-#[inline]
 pub fn csv_writer(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     file: std::fs::File,
@@ -32,7 +31,7 @@ pub fn csv_writer(
                 };
 
                 wtr.write_record(&b)
-                    .context(format_args!("Failed to write CSV record at: {}", line_no + 1))?;
+                    .context(|| format!("Failed to write CSV record at: {}", line_no + 1))?;
             }
 
             wtr.flush().context("Failed to flush writer")?;

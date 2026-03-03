@@ -2,13 +2,12 @@ use std::io::{BufWriter, Write};
 
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, into_byte_record};
 
-#[inline]
 pub fn write_json(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     file: std::fs::File,
     parse_numbers: bool,
 ) -> CtxResult<()> {
-    let mut buffered_writer = BufWriter::new(&file);
+    let mut wtr = BufWriter::new(&file);
 
     match data_stream {
         WriterStreams::Values { iter } => {
@@ -18,19 +17,17 @@ pub fn write_json(
                     .log("[WARN]")
                     .unwrap_or_else(|| DataTypes::Json(serde_json::json!({})));
 
-                serde_json::to_writer_pretty(&mut buffered_writer, &valid_obj)
+                serde_json::to_writer_pretty(&mut wtr, &valid_obj)
                     .context("Failed to write object into output JSON file")?;
 
-                writeln!(buffered_writer).context("Failed to write newline")?;
+                writeln!(wtr).context("Failed to write newline")?;
             }
-
-            buffered_writer.flush().context("Failed to flush final bytes")?;
         }
 
         WriterStreams::Table { headers, iter } => {
             let mut esc_buf: Vec<u8> = Vec::with_capacity(10);
 
-            buffered_writer.write_all(b"[\n").context("Failed to write opening bracket")?;
+            wtr.write_all(b"[\n").context("Failed to write opening bracket")?;
 
             let headers: Vec<String> = headers
                 .iter()
@@ -48,16 +45,16 @@ pub fn write_json(
             for (line_no, rec) in iter.enumerate() {
                 let line = line_no + 1;
                 if first_obj {
-                    buffered_writer.write_all(b"  {\n").context(format_args!(
+                    wtr.write_all(b"  {\n").context(|| format!(
                         "Failed to write opening curly brace for record: {}",
                         line
                     ))?;
 
                     first_obj = false;
                 } else {
-                    buffered_writer
+                    wtr
                         .write_all(b",\n  {\n")
-                        .context(format_args!("Failed to write bracket for record: {}", line))?;
+                        .context(|| format!("Failed to write bracket for record: {}", line))?;
                 }
 
                 let mut first_value = true;
@@ -88,33 +85,43 @@ pub fn write_json(
                     }
 
                     if first_value {
-                        write!(&mut buffered_writer, "    \"{}\": ", &h)
-                            .context(format_args!("Failed to write key in record: {}", line))?;
+                        wtr.write_all(b"    \"")
+                            .context(|| format!("Failed to write key in record: {}", line))?;
+
+                        wtr.write_all(h.as_bytes())
+                            .context(|| format!("Failed to write key in record: {}", line))?;
+
+                        wtr.write_all(b"\": ")
+                            .context(|| format!("Failed to write key in record: {}", line))?;
 
                         first_value = false;
                     } else {
-                        write!(&mut buffered_writer, ",\n    \"{}\": ", &h)
-                            .context(format_args!("Failed to write key in record: {}", line))?;
+                        wtr.write_all(b",\n    \"")
+                            .context(|| format!("Failed to write key in record: {}", line))?;
+
+                        wtr.write_all(h.as_bytes())
+                            .context(|| format!("Failed to write key in record: {}", line))?;
+
+                        wtr.write_all(b"\": ")
+                            .context(|| format!("Failed to write key in record: {}", line))?;
                     }
 
-                    buffered_writer
+                    wtr
                         .write_all(esc_buf.as_slice())
-                        .context(format_args!("Failed to write value in record: {}", line))?;
+                        .context(|| format!("Failed to write value in record: {}", line))?;
                 }
 
-                buffered_writer.write_all(b"\n  }").context(format_args!(
+                wtr.write_all(b"\n  }").context(|| format!(
                     "Failed to write closing curly brace for record: {}",
                     line
                 ))?;
             }
 
-            buffered_writer.write_all(b"\n]").context("Failed to write closing bracket")?;
-
-            buffered_writer.flush().context("Failed to flush writer")?;
+            wtr.write_all(b"\n]").context("Failed to write closing bracket")?;
         }
 
         WriterStreams::Ndjson { values } => {
-            buffered_writer.write_all(b"[\n").context("Failed to write opening bracket")?;
+            wtr.write_all(b"[\n").context("Failed to write opening bracket")?;
 
             let mut first = true;
 
@@ -127,23 +134,23 @@ pub fn write_json(
                     .unwrap_or_else(|| DataTypes::Json(serde_json::json!({})));
 
                 if first {
-                    serde_json::to_writer_pretty(&mut buffered_writer, &obj)
-                        .context(format_args!("Failed to write record: {}", idx))?;
+                    serde_json::to_writer_pretty(&mut wtr, &obj)
+                        .context(|| format!("Failed to write record: {}", idx))?;
 
                     first = false;
                 } else {
-                    buffered_writer
+                    wtr
                         .write_all(b",\n")
-                        .context(format_args!("Failed to write comma after record: {}", idx))?;
+                        .context(|| format!("Failed to write comma after record: {}", idx))?;
 
-                    serde_json::to_writer_pretty(&mut buffered_writer, &obj)
-                        .context(format_args!("Failed to write record: {}", idx))?;
+                    serde_json::to_writer_pretty(&mut wtr, &obj)
+                        .context(|| format!("Failed to write record: {}", idx))?;
                 }
             }
 
-            buffered_writer.write_all(b"\n]").context("Failed to write closing bracket")?;
+            wtr.write_all(b"\n]").context("Failed to write closing bracket")?;
         }
     }
 
-    Ok(())
+    wtr.flush().context("Failed to flush final bytes")
 }

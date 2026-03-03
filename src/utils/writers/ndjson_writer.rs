@@ -9,13 +9,12 @@ use crate::utils::{
     CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, escape, into_byte_record,
 };
 
-#[inline]
 pub fn ndjson_writer(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     file: File,
     parse_numbers: bool,
 ) -> CtxResult<()> {
-    let mut writer = BufWriter::new(file);
+    let mut wtr = BufWriter::new(file);
 
     match data_stream {
         WriterStreams::Values { iter } => {
@@ -35,16 +34,16 @@ pub fn ndjson_writer(
                     for (idx, obj) in arr.iter().enumerate() {
                         let idx = idx + 1;
 
-                        serde_json::to_writer(&mut writer, obj)
-                            .context(format_args!("Failed to write object: {}", idx))?;
+                        serde_json::to_writer(&mut wtr, obj)
+                            .context(|| format!("Failed to write object: {}", idx))?;
 
-                        writeln!(writer).context("Failed to write newline")?;
+                        writeln!(wtr).context("Failed to write newline")?;
                     }
                 } else if let Value::Object(_) = json {
-                    serde_json::to_writer(&mut writer, &json)
-                        .context(format_args!("Failed to write object: {}", line_no))?;
+                    serde_json::to_writer(&mut wtr, &json)
+                        .context(|| format!("Failed to write object: {}", line_no))?;
 
-                    writeln!(writer).context("Failed to write newline")?;
+                    writeln!(wtr).context("Failed to write newline")?;
                 }
             }
         }
@@ -66,9 +65,9 @@ pub fn ndjson_writer(
             for (line_no, rec) in iter.enumerate() {
                 let line_no = line_no + 1;
 
-                writer
+                wtr
                     .write(b"{")
-                    .context(format_args!("Failed to write bracket for object: {}", line_no))?;
+                    .context(|| format!("Failed to write bracket for object: {}", line_no))?;
 
                 let mut first_value = true;
 
@@ -97,27 +96,39 @@ pub fn ndjson_writer(
                     }
 
                     if first_value {
-                        write!(&mut writer, "\"{}\": ", &h)
-                            .context(format_args!("Failed to write key in record: {}", line_no))?;
+                        wtr.write(b"\"")
+                            .context(|| format!("Failed to write key in record: {}", line_no))?;
+
+                        wtr.write_all(h.as_bytes())
+                            .context(|| format!("Failed to write key in record: {}", line_no))?;
+
+                        wtr.write_all(b"\": ")
+                            .context(|| format!("Failed to write key in record: {}", line_no))?;
 
                         first_value = false;
                     } else {
-                        write!(&mut writer, ", \"{}\": ", &h)
-                            .context(format_args!("Failed to write key in record: {}", line_no))?;
+                        wtr.write(b", \"")
+                            .context(|| format!("Failed to write key in record: {}", line_no))?;
+
+                        wtr.write_all(h.as_bytes())
+                            .context(|| format!("Failed to write key in record: {}", line_no))?;
+
+                        wtr.write_all(b"\": ")
+                            .context(|| format!("Failed to write key in record: {}", line_no))?;
                     }
 
-                    writer
+                    wtr
                         .write_all(esc_buf.as_slice())
-                        .context(format_args!("Failed to write value in record: {}", line_no))?;
+                        .context(|| format!("Failed to write value in record: {}", line_no))?;
                 }
 
-                writer.write_all(b"}\n").context(format_args!(
+                wtr.write_all(b"}\n").context(|| format!(
                     "Failed to write closing curly brace for record: {}",
                     line_no
                 ))?;
             }
 
-            writer.flush().context("Failed to flush writer")?;
+            wtr.flush().context("Failed to flush writer")?;
         }
 
         WriterStreams::Ndjson { values } => {
@@ -127,8 +138,8 @@ pub fn ndjson_writer(
                     .log("[WARN]")
                     .unwrap_or_else(|| DataTypes::Json(serde_json::json!({})));
 
-                serde_json::to_writer(&mut writer, &json)
-                    .context(format_args!("Failed to write object: {}", line_no + 1))?;
+                serde_json::to_writer(&mut wtr, &json)
+                    .context(|| format!("Failed to write object: {}", line_no + 1))?;
             }
         }
     }

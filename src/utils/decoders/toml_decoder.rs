@@ -1,6 +1,6 @@
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, WriterStreams};
 
-#[inline]
+
 pub fn toml_decoder(
     content: Vec<u8>,
 ) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>> {

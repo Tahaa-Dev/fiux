@@ -2,13 +2,14 @@ use std::path::PathBuf;
 
 use crate::utils::{CtxResult, CtxResultExt};
 
+#[inline(always)]
 pub fn validate_toml(path: &PathBuf) -> CtxResult<()> {
     let file_bytes = std::fs::read(path)
         .context("Failed to validate file")
-        .context(format_args!("Failed to open file: {}", &path.to_string_lossy()))?;
+        .context(|| format!("Failed to open file: {}", &path.to_string_lossy()))?;
 
     let res = toml::from_slice::<serde::de::IgnoredAny>(&file_bytes)
-        .context(format_args!("Invalid TOML values: {}", &path.to_string_lossy()))
+        .context(|| format!("Invalid TOML values: {}", &path.to_string_lossy()))
         .map(|_| ());
 
     println!(

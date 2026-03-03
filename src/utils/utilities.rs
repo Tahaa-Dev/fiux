@@ -1,5 +1,3 @@
-use std::io::Error;
-
 use csv::ByteRecord;
 
 use serde::Serialize;
@@ -38,14 +36,17 @@ impl Serialize for DataTypes {
     }
 }
 
+#[inline(always)]
 pub fn into_byte_record(brec: CtxResult<DataTypes>) -> CtxResult<ByteRecord> {
-    match brec.context("Failed to unwrap record")? {
+    let rec = brec.context("Failed to unwrap record")?;
+
+    match rec {
         DataTypes::Csv(csv) => Ok(csv),
         _ => unreachable!(),
     }
 }
 
-static NEEDS_ESCAPE: [bool; 256] = {
+const NEEDS_ESCAPE: [bool; 256] = {
     let mut table = [false; 256];
     table[b'\\' as usize] = true;
     table[b'"' as usize] = true;
@@ -55,7 +56,7 @@ static NEEDS_ESCAPE: [bool; 256] = {
     table
 };
 
-#[inline]
+#[inline(always)]
 pub fn escape(byte: u8, output: &mut Vec<u8>) {
     if NEEDS_ESCAPE[byte as usize] {
         output.reserve_exact(2);
@@ -73,7 +74,7 @@ pub fn escape(byte: u8, output: &mut Vec<u8>) {
     }
 }
 
-#[cfg(all)]
+#[cfg(test)]
 mod tests {
     use super::*;
 

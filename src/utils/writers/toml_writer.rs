@@ -6,13 +6,12 @@ use crate::utils::{
     CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, escape, into_byte_record,
 };
 
-#[inline]
 pub fn toml_writer(
     data_stream: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     file: std::fs::File,
     parse_numbers: bool,
 ) -> CtxResult<()> {
-    let mut buffered_writer = BufWriter::new(file);
+    let mut wtr = BufWriter::new(file);
 
     match data_stream {
         WriterStreams::Values { iter } => {
@@ -31,7 +30,7 @@ pub fn toml_writer(
 
                     map.insert("Array".to_string(), obj);
 
-                    buffered_writer
+                    wtr
                         .write_all(
                             toml::to_string_pretty(&Value::Table(map))
                                 .context("Failed to serialize TOML table")?
@@ -39,7 +38,7 @@ pub fn toml_writer(
                         )
                         .context("Failed to write TOML table")?;
                 } else {
-                    buffered_writer
+                    wtr
                         .write_all(
                             toml::to_string_pretty(&obj)
                                 .context("Failed to serialize TOML table")?
@@ -48,7 +47,7 @@ pub fn toml_writer(
                         .context("Failed to write TOML table")?;
                 }
             }
-            buffered_writer.flush().context("Failed to flush writer")?;
+            wtr.flush().context("Failed to flush writer")?;
         }
 
         WriterStreams::Table { headers, iter } => {
@@ -79,13 +78,13 @@ pub fn toml_writer(
             for (line_no, rec) in iter.enumerate() {
                 let line_no = line_no + 1;
                 if !first_row {
-                    buffered_writer
+                    wtr
                         .write_all(b"\n[[Rows]]\n")
-                        .context(format_args!("Failed to write key for row: {}", line_no))?;
+                        .context(|| format!("Failed to write key for row: {}", line_no))?;
                 } else {
-                    buffered_writer
+                    wtr
                         .write_all(b"[[Rows]]\n")
-                        .context(format_args!("Failed to write key for row: {}", line_no))?;
+                        .context(|| format!("Failed to write key for row: {}", line_no))?;
 
                     first_row = false;
                 }
@@ -114,18 +113,21 @@ pub fn toml_writer(
                         esc_buf.push(b'"');
                     }
 
-                    write!(&mut buffered_writer, "{} = ", &h)
-                        .context(format_args!("Failed to write key in record: {}", line_no))?;
+                    wtr.write_all(h.as_bytes())
+                        .context(|| format!("Failed to write key in record: {}", line_no))?;
 
-                    buffered_writer
+                    wtr.write_all(b" = ")
+                        .context(|| format!("Failed to write key in record: {}", line_no))?;
+
+                    wtr
                         .write_all(esc_buf.as_slice())
-                        .context(format_args!("Failed to write value in record: {}", line_no))?;
+                        .context(|| format!("Failed to write value in record: {}", line_no))?;
 
-                    writeln!(&mut buffered_writer).context("Failed to write newline")?;
+                    writeln!(&mut wtr).context("Failed to write newline")?;
                 }
             }
 
-            buffered_writer.flush().context("Failed to flush writer")?;
+            wtr.flush().context("Failed to flush writer")?;
         }
 
         WriterStreams::Ndjson { values } => {
@@ -143,22 +145,22 @@ pub fn toml_writer(
                 .unwrap_or_else(|| Value::Table(Map::new()));
 
                 if first {
-                    buffered_writer
+                    wtr
                         .write_all(b"[[Array]]\n")
-                        .context(format_args!("Failed to write array key: {}", rec_no))?;
+                        .context(|| format!("Failed to write array key: {}", rec_no))?;
 
                     first = false;
                 } else {
-                    buffered_writer
+                    wtr
                         .write_all(b"\n[[Array]]\n")
-                        .context(format_args!("Failed to write array key: {}", rec_no))?;
+                        .context(|| format!("Failed to write array key: {}", rec_no))?;
                 }
 
                 if let Value::Array(_) = obj {
                     let mut map = Map::with_capacity(1);
                     map.insert("Array".to_string(), obj);
 
-                    buffered_writer
+                    wtr
                         .write_all(
                             toml::to_string_pretty(&Value::Table(map))
                                 .context("Failed to serialize TOML table")?
@@ -166,7 +168,7 @@ pub fn toml_writer(
                         )
                         .context("Failed to write TOML table")?;
                 } else {
-                    buffered_writer
+                    wtr
                         .write_all(
                             toml::to_string_pretty(&obj)
                                 .context("Failed to serialize valid TOML table")?
@@ -175,7 +177,7 @@ pub fn toml_writer(
                         .context("Failed to write TOML table")?;
                 }
 
-                buffered_writer.flush().context("Failed to flush writer")?;
+                wtr.flush().context("Failed to flush writer")?;
             }
         }
     }

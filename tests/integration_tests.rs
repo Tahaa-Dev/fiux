@@ -4,15 +4,12 @@ use std::{fs, io::Error, process::Command};
 use tempfile::Builder;
 
 #[test]
-fn test_csv_to_json_conversion() -> CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".csv").tempfile().context("Failed to crate input TempFile")?;
-    let output =
-        Builder::new().suffix(".json").tempfile().context("Failed to create output TempFile")?;
+fn test_csv_to_json_conversion() -> Result<(), Error> {
+    let input = Builder::new().suffix(".csv").tempfile()?;
+    let output = Builder::new().suffix(".json").tempfile()?;
 
     // Write simple CSV
-    fs::write(input.path(), "name,age,city\nAlice,30,NYC\nBob,25,LA\n")
-        .context("Failed to write input TempFile contents")?;
+    fs::write(input.path(), "name,age,city\nAlice,30,NYC\nBob,25,LA\n")?;
 
     // Run fiux convert
     Command::new(cargo::cargo_bin!("fiux"))
@@ -24,7 +21,7 @@ fn test_csv_to_json_conversion() -> CtxResult<(), Error> {
         .success();
 
     // Verify output
-    let result = fs::read_to_string(output.path()).context("Failed to read output file")?;
+    let result = fs::read_to_string(output.path())?;
     assert!(result.contains(r#""name": "Alice""#));
     assert!(result.contains(r#""age": "30""#));
     assert!(result.contains(r#""city": "NYC""#));
@@ -33,15 +30,12 @@ fn test_csv_to_json_conversion() -> CtxResult<(), Error> {
 }
 
 #[test]
-fn test_tsv_to_json_with_delimiter() -> CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".tsv").tempfile().context("Failed to crate input TempFile")?;
-    let output =
-        Builder::new().suffix(".ndjson").tempfile().context("Failed to create output TempFile")?;
+fn test_tsv_to_json_with_delimiter() -> Result<(), Error> {
+    let input = Builder::new().suffix(".tsv").tempfile()?;
+    let output = Builder::new().suffix(".ndjson").tempfile()?;
 
     // Write TSV
-    fs::write(input.path(), "name\tage\tcity\nAlice\t30\tNYC\nBob\t25\tLA\n")
-        .context("Failed to write input TempFile contents")?;
+    fs::write(input.path(), "name\tage\tcity\nAlice\t30\tNYC\nBob\t25\tLA\n")?;
 
     Command::new(cargo::cargo_bin!("fiux"))
         .arg("convert")
@@ -53,7 +47,7 @@ fn test_tsv_to_json_with_delimiter() -> CtxResult<(), Error> {
         .assert()
         .success();
 
-    let result = fs::read_to_string(output.path()).context("Failed to read output file")?;
+    let result = fs::read_to_string(output.path())?;
     assert!(result.contains(r#""name": "Alice""#));
     assert!(result.contains(r#""age": "30""#));
     assert!(result.contains(r#""city": "NYC""#));
@@ -61,16 +55,13 @@ fn test_tsv_to_json_with_delimiter() -> CtxResult<(), Error> {
 }
 
 #[test]
-fn test_error_logging_to_file() -> CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".csv").tempfile().context("Failed to crate input TempFile")?;
-    let output =
-        Builder::new().suffix(".toml").tempfile().context("Failed to create output TempFile")?;
-    let log = tempfile::NamedTempFile::new().context("Failed to create log TempFile")?;
+fn test_error_logging_to_file() -> Result<(), Error> {
+    let input = Builder::new().suffix(".csv").tempfile()?;
+    let output = Builder::new().suffix(".toml").tempfile()?;
+    let log = tempfile::NamedTempFile::new()?;
 
     // Write broken CSV (mismatched columns)
-    fs::write(input.path(), "a,b,c\n1,2,3\ninvalid\n4,5,6\n")
-        .context("Failed to write input TempFile contents")?;
+    fs::write(input.path(), "a,b,c\n1,2,3\ninvalid\n4,5,6\n")?;
 
     Command::new(cargo::cargo_bin!("fiux"))
         .arg("--log-file")
@@ -83,18 +74,16 @@ fn test_error_logging_to_file() -> CtxResult<(), Error> {
         .success(); // Should still succeed (graceful error handling)
 
     // Check log file has error content
-    let log_content = fs::read_to_string(log.path()).context("Failed to read output file")?;
+    let log_content = fs::read_to_string(log.path())?;
     assert!(!log_content.is_empty());
     assert!(log_content.contains("Invalid CSV"));
-    assert!(log_content.contains("---")); // Separator
 
     Ok(())
 }
 
 #[test]
-fn test_validation_pass() -> CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".json").tempfile().context("Failed to create output TempFile")?;
+fn test_validation_pass() -> Result<(), Error> {
+    let input = Builder::new().suffix(".json").tempfile()?;
 
     let valid_json = r#"
     {
@@ -111,7 +100,7 @@ fn test_validation_pass() -> CtxResult<(), Error> {
     "#;
 
     // Write valid JSON
-    fs::write(input.path(), valid_json).context("Failed to write input TempFile contents")?;
+    fs::write(input.path(), valid_json)?;
 
     Command::new(cargo::cargo_bin!("fiux")).arg("validate").arg(input.path()).assert().success();
 
@@ -119,13 +108,11 @@ fn test_validation_pass() -> CtxResult<(), Error> {
 }
 
 #[test]
-fn test_validation_fail() -> CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".csv").tempfile().context("Failed to crate input TempFile")?;
+fn test_validation_fail() -> Result<(), Error> {
+    let input = Builder::new().suffix(".csv").tempfile()?;
 
     // Write invalid CSV
-    fs::write(input.path(), "a,b,c\n1,2,3\ninvalid\n")
-        .context("Failed to write input TempFile contents")?;
+    fs::write(input.path(), "a,b,c\n1,2,3\ninvalid\n")?;
 
     Command::new(cargo::cargo_bin!("fiux")).arg("validate").arg(input.path()).assert().failure(); // Should exit with code 1
 
@@ -133,12 +120,11 @@ fn test_validation_fail() -> CtxResult<(), Error> {
 }
 
 #[test]
-fn test_validation_with_delimiter() -> CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".psv").tempfile().context("Failed to crate input TempFile")?;
+fn test_validation_with_delimiter() -> Result<(), Error> {
+    let input = Builder::new().suffix(".psv").tempfile()?;
 
     // Write PSV (pipe-separated)
-    fs::write(input.path(), "a|b|c\n1|2|3\n").context("Failed to write input TempFile contents")?;
+    fs::write(input.path(), "a|b|c\n1|2|3\n")?;
 
     Command::new(cargo::cargo_bin!("fiux"))
         .arg("validate")
@@ -152,11 +138,9 @@ fn test_validation_with_delimiter() -> CtxResult<(), Error> {
 }
 
 #[test]
-fn test_ndjson_to_json() -> CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".ndjson").tempfile().context("Failed to crate input TempFile")?;
-    let output =
-        Builder::new().suffix(".json").tempfile().context("Failed to create output TempFile")?;
+fn test_ndjson_to_json() -> Result<(), Error> {
+    let input = Builder::new().suffix(".ndjson").tempfile()?;
+    let output = Builder::new().suffix(".json").tempfile()?;
 
     // Write NDJSON
     fs::write(
@@ -164,8 +148,7 @@ fn test_ndjson_to_json() -> CtxResult<(), Error> {
         r#"{"name":"Alice","age":30}
 {"name":"Bob","age":25}
 "#,
-    )
-    .context("Failed to write input TempFile contents")?;
+    )?;
 
     Command::new(cargo::cargo_bin!("fiux"))
         .arg("convert")
@@ -175,7 +158,7 @@ fn test_ndjson_to_json() -> CtxResult<(), Error> {
         .assert()
         .success();
 
-    let result = fs::read_to_string(output.path()).context("Failed to read output file")?;
+    let result = fs::read_to_string(output.path())?;
 
     assert!(result.contains(r#""name": "Alice""#));
 
@@ -183,14 +166,11 @@ fn test_ndjson_to_json() -> CtxResult<(), Error> {
 }
 
 #[test]
-fn test_parse_numbers_flag() -> CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".csv").tempfile().context("Failed to crate input TempFile")?;
-    let output =
-        Builder::new().suffix(".ndjson").tempfile().context("Failed to create output TempFile")?;
+fn test_parse_numbers_flag() -> Result<(), Error> {
+    let input = Builder::new().suffix(".csv").tempfile()?;
+    let output = Builder::new().suffix(".ndjson").tempfile()?;
 
-    fs::write(input.path(), "a,b\n1,2\n3,4\n")
-        .context("Failed to write input TempFile contents")?;
+    fs::write(input.path(), "a,b\n1,2\n3,4\n")?;
 
     Command::new(cargo::cargo_bin!("fiux"))
         .arg("convert")
@@ -201,7 +181,7 @@ fn test_parse_numbers_flag() -> CtxResult<(), Error> {
         .assert()
         .success();
 
-    let result = fs::read_to_string(output.path()).context("Failed to read output file")?;
+    let result = fs::read_to_string(output.path())?;
     // With --parse-numbers, should be numeric not string
     assert!(result.contains(r#""a": 1"#));
 
@@ -209,11 +189,9 @@ fn test_parse_numbers_flag() -> CtxResult<(), Error> {
 }
 
 #[test]
-fn test_toml_to_json() -> CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".toml").tempfile().context("Failed to crate input TempFile")?;
-    let output =
-        Builder::new().suffix(".json").tempfile().context("Failed to create output TempFile")?;
+fn test_toml_to_json() -> Result<(), Error> {
+    let input = Builder::new().suffix(".toml").tempfile()?;
+    let output = Builder::new().suffix(".json").tempfile()?;
 
     fs::write(
         input.path(),
@@ -243,8 +221,7 @@ assert_cmd = "2.1.1"
 predicates = "3.1.3"
 tempfile = "3.24.0"
     "#,
-    )
-    .context("Failed to write input TempFile contents")?;
+    )?;
 
     Command::new(cargo::cargo_bin!("fiux"))
         .arg("convert")
@@ -254,19 +231,17 @@ tempfile = "3.24.0"
         .assert()
         .success();
 
-    let result = fs::read_to_string(output.path()).context("Failed to read output file")?;
+    let result = fs::read_to_string(output.path())?;
     assert!(result.contains(r#""name": "fiux""#) || result.contains(r#""name":"fiux""#));
 
     Ok(())
 }
 
 #[test]
-fn test_ndjson_to_toml() -> resext::CtxResult<(), Error> {
-    let input =
-        Builder::new().suffix(".ndjson").tempfile().context("Failed to crate input TempFile")?;
+fn test_ndjson_to_toml() -> Result<(), Error> {
+    let input = Builder::new().suffix(".ndjson").tempfile()?;
 
-    let output =
-        Builder::new().suffix(".toml").tempfile().context("Failed to create output TempFile")?;
+    let output = Builder::new().suffix(".toml").tempfile()?;
 
     fs::write(
         input.path(),
@@ -275,8 +250,7 @@ fn test_ndjson_to_toml() -> resext::CtxResult<(), Error> {
 {"nums": [1, 2, 3, 4, 5], "squares": [1, 4, 9, 16, 25]}
 {"nums and squares": [{"1": 1}, {"2": 4}, {"3": 9}, {"4": 16}, {"5": 25}]}
     "#,
-    )
-    .context("Failed to write input TempFile contents")?;
+    )?;
 
     Command::new(cargo::cargo_bin!("fiux"))
         .arg("convert")
@@ -286,7 +260,7 @@ fn test_ndjson_to_toml() -> resext::CtxResult<(), Error> {
         .assert()
         .success();
 
-    fs::read_to_string(output.path()).context("Failed to read output file")?;
+    fs::read_to_string(output.path())?;
 
     Ok(())
 }

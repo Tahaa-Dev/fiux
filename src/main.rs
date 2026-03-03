@@ -110,8 +110,7 @@ use utils::*;
 
 pub static ARGS: LazyLock<Args> = LazyLock::new(Args::parse);
 
-#[inline]
-fn run() -> CtxResult<(), Error> {
+fn run() -> CtxResult<()> {
     let args = &*ARGS;
 
     match &args.cmd {
@@ -123,18 +122,15 @@ fn run() -> CtxResult<(), Error> {
             input_delimiter,
             output_delimiter,
         } => {
-            // Check if input exists
-            panic_if!(
-                !Path::new(&input).exists(),
-                || format!(
-                    "{} {} {} {}",
-                    "FATAL:".red().bold(),
-                    "Input file:",
+            if !Path::new(&input).exists() {
+                eprintln!(
+                    "{} Input file: {} doesn't exist",
+                    "[FATAL]".red().bold(),
                     input.to_str().unwrap_or("input_file").on_bright_red(),
-                    "doesn't exist"
-                ),
-                1
-            );
+                );
+
+                exit(1);
+            }
 
             let output_file = OpenOptions::new()
                 .create(true)
@@ -154,8 +150,8 @@ fn run() -> CtxResult<(), Error> {
             } else {
                 output_ext = output
                     .extension()
-                    .ok_or_else(|| Error::new(EK::InvalidFilename, "Output file has no extension"))
-                    .context("Failed to get output file's extension")?
+                    .ok_or_else(|| Error::new(EK::InvalidFilename, "No valid extension"))
+                    .context("Failed to get output file extension")?
                     .to_string_lossy();
                 o_d = ',';
             }
@@ -168,8 +164,8 @@ fn run() -> CtxResult<(), Error> {
             } else {
                 let input_ext: &str = &input
                     .extension()
-                    .ok_or_else(|| Error::new(EK::InvalidFilename, "Input file has no extension"))
-                    .context("Failed to get input file's extension")?
+                    .ok_or_else(|| Error::new(EK::InvalidFilename, "No valid extension"))
+                    .context("Failed to get input file extension")?
                     .to_string_lossy();
 
                 match input_ext {
@@ -205,17 +201,15 @@ fn run() -> CtxResult<(), Error> {
         }
 
         Commands::Validate { input, delimiter } => {
-            panic_if!(
-                !Path::new(&input).exists(),
-                || format!(
-                    "{} {} {} {}",
-                    "FATAL:".red().bold(),
-                    "Input file:",
+            if !Path::new(&input).exists() {
+                eprintln!(
+                    "{} Input file: {} doesn't.exist",
+                    "[FATAL]".red().bold(),
                     input.to_str().unwrap_or("input_file").on_bright_red(),
-                    "doesn't exist"
-                ),
-                1
-            );
+                );
+
+                exit(1);
+            }
 
             let i_d: char;
 
@@ -226,8 +220,8 @@ fn run() -> CtxResult<(), Error> {
             } else {
                 temp_ext = input
                     .extension()
-                    .ok_or_else(|| Error::new(EK::InvalidFilename, "Output file has no extension"))
-                    .context("Failed to get output file's extension")?
+                    .ok_or_else(|| Error::new(EK::InvalidFilename, "No valid extension"))
+                    .context("Failed to get output file extension")?
                     .to_string_lossy();
                 i_d = ',';
             }
@@ -267,14 +261,14 @@ fn main() {
     }
 }
 
-#[inline]
+#[inline(always)]
 fn match_output(
-    data: WriterStreams<impl Iterator<Item = CtxResult<DataTypes, Error>>>,
+    data: WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>,
     output_file: std::fs::File,
     output_ext: &str,
     parse_numbers: bool,
     o_d: char,
-) -> CtxResult<(), Error> {
+) -> CtxResult<()> {
     match output_ext {
         "json" => write_json::write_json(data, output_file, parse_numbers)
             .context("Serialization failed")?,
@@ -289,8 +283,8 @@ fn match_output(
     Ok(())
 }
 
-#[inline]
-fn log_invalid_ext(input_ext: &str, is_output: bool) -> CtxResult<(), Error> {
+#[inline(always)]
+fn log_invalid_ext(input_ext: &str, is_output: bool) -> CtxResult<()> {
     let s = if is_output { "Out" } else { "In" };
     let repo_link = "https://github.com/Tahaa-Dev/fiux";
 

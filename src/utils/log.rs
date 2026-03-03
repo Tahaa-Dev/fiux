@@ -8,7 +8,7 @@ use owo_colors::OwoColorize;
 
 use resext::resext;
 
-#[resext(buf_size = 80, alias = CtxResult, delimiter = " -> ", alloc = true, include_variant = true)]
+#[resext(buf_size = 28, alias = CtxResult, delimiter = " -> ", alloc = true, include_variant = true)]
 pub enum FiuxErr {
     Json(serde_json::Error),
     TomlDeserialize(toml::de::Error),
@@ -48,6 +48,7 @@ static LOGGER: LazyLock<Mutex<Logger>> = LazyLock::new(|| {
 });
 
 impl std::io::Write for Logger {
+    #[inline]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         match self {
             Logger::Stdout(out) => out.write(buf),
@@ -55,6 +56,7 @@ impl std::io::Write for Logger {
         }
     }
 
+    #[inline]
     fn flush(&mut self) -> std::io::Result<()> {
         match self {
             Logger::Stdout(out) => out.flush(),
@@ -68,6 +70,7 @@ pub trait Log<T> {
 }
 
 impl<T> Log<T> for CtxResult<T> {
+    #[inline]
     fn log(self, level: &str) -> Option<T> {
         match self {
             Ok(ok) => Some(ok),
@@ -83,7 +86,9 @@ impl<T> Log<T> for CtxResult<T> {
                 };
 
                 let res =
-                    write!(&mut wtr, "{} {}", level.yellow(), err).context("Failed to write log");
+                    writeln!(&mut wtr, "{} {}", level.yellow(), err).context("Failed to write log");
+
+                let _ = writeln!(&mut wtr);
 
                 match res {
                     Ok(_) => {}
@@ -96,13 +101,14 @@ impl<T> Log<T> for CtxResult<T> {
     }
 }
 
+#[inline]
 pub fn flush_logger(msg: &str) -> CtxResult<()> {
     let mut wtr = LOGGER
         .lock()
         .map_err(|e| std::io::Error::other(format!("{}", e)))
         .context("Failed to lock logger")?;
 
-    write!(&mut wtr, "{}", msg).context("Failed to write status message")?;
+    wtr.write_all(msg.as_bytes()).context("Failed to write status message")?;
 
     wtr.flush().context("Failed to flush logger")
 }

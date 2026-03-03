@@ -2,10 +2,11 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use crate::utils::{CtxResult, CtxResultErr, CtxResultExt, Log};
 
+#[inline(always)]
 pub fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<()> {
     let file = File::open(path)
         .context("Failed to validate file")
-        .context(format_args!("Failed to open file: {}", &path.to_string_lossy()))?;
+        .context(|| format!("Failed to open file: {}", &path.to_string_lossy()))?;
 
     let buf = BufReader::with_capacity(256 * 1024, file);
 
@@ -22,12 +23,12 @@ pub fn validate_csv(path: &PathBuf, delimiter: char) -> CtxResult<()> {
 
     reader
         .byte_headers()
-        .context(format_args!("Input file: {} is invalid", &path.to_string_lossy()))
+        .context(|| format!("Input file: {} is invalid", &path.to_string_lossy()))
         .context("Failed to read input file headers")?;
 
     for (idx, rec) in reader.byte_records().enumerate() {
         let opt = rec
-            .context(format_args!("Invalid CSV data at record: {}", idx + 1))
+            .context(|| format!("Invalid CSV data at record: {}", idx + 1))
             .log("[WARN]")
             .is_none();
 

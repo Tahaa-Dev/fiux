@@ -1,10 +1,11 @@
 use std::{
     fs::File,
-    io::{BufRead, BufReader, Error},
+    io::{BufRead, BufReader},
     iter::from_fn,
 };
 
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams};
+
 
 pub fn ndjson_decoder(
     mut reader: BufReader<File>,
@@ -18,12 +19,12 @@ pub fn ndjson_decoder(
             buf.clear();
             let bytes = reader
                 .read_until(b'\n', &mut buf)
-                .context(format_args!("Failed to read line: {}", line_no))
+                .context(|| format!("Failed to read line: {}", line_no))
                 .log("[WARN]");
 
-            if bytes == Some(0) {
+            if bytes.is_some_and(|b| b == 0) {
                 return None;
-            } else if bytes == None {
+            } else if bytes.is_none() {
                 continue;
             } else {
                 while buf.last() == Some(&b'\n') || buf.last() == Some(&b'\r') {
@@ -36,7 +37,7 @@ pub fn ndjson_decoder(
 
                 let ndjson_obj = serde_json::from_slice(buf.as_slice())
                     .context("Failed to deserialize file")
-                    .context(format_args!("Invalid NDJSON values at line: {}", line_no));
+                    .context(|| format!("Invalid NDJSON values at line: {}", line_no));
                 return match ndjson_obj {
                     Ok(ok) => Some(Ok(DataTypes::Json(ok))),
                     Err(err) => Some(Err(err)),
