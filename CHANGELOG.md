@@ -1,6 +1,15 @@
 # Changelog
 
-## [0.5.2] - 2026-01-10
+## v0.5.4 - 2026-03-04
+
+### Added
+
+- Better logs and error messages
+- Internal changes to make the codebase easier to maintain
+
+---
+
+## v0.5.2 - 2026-01-10
 
 ### Added
 
@@ -14,7 +23,7 @@ No notable changes have been implemented for public APIs
 
 ---
 
-## [0.5.0] - 2026-01-08
+## v0.5.0 - 2026-01-08
 
 ### Added
 

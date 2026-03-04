@@ -65,8 +65,7 @@ pub fn ndjson_writer(
             for (line_no, rec) in iter.enumerate() {
                 let line_no = line_no + 1;
 
-                wtr
-                    .write(b"{")
+                wtr.write(b"{")
                     .context(|| format!("Failed to write bracket for object: {}", line_no))?;
 
                 let mut first_value = true;
@@ -117,15 +116,13 @@ pub fn ndjson_writer(
                             .context(|| format!("Failed to write key in record: {}", line_no))?;
                     }
 
-                    wtr
-                        .write_all(esc_buf.as_slice())
+                    wtr.write_all(esc_buf.as_slice())
                         .context(|| format!("Failed to write value in record: {}", line_no))?;
                 }
 
-                wtr.write_all(b"}\n").context(|| format!(
-                    "Failed to write closing curly brace for record: {}",
-                    line_no
-                ))?;
+                wtr.write_all(b"}\n").context(|| {
+                    format!("Failed to write closing curly brace for record: {}", line_no)
+                })?;
             }
 
             wtr.flush().context("Failed to flush writer")?;

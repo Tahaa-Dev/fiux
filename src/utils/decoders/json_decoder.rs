@@ -2,7 +2,6 @@ use std::{fs::File, io::BufReader};
 
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, WriterStreams};
 
-
 pub fn json_decoder(
     reader: serde_json::Deserializer<serde_json::de::IoRead<BufReader<File>>>,
 ) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>> {

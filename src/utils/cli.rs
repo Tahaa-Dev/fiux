@@ -3,37 +3,37 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand, ValueHint::FilePath};
 
 static LONG_ABT: &str = r#"
-fiux: The fastest streaming-first file conveter.
+fiux - The fastest streaming-first file conveter.
 
-  • Supports JSON, NDJSON, TOML, CSV, TSV, PSV and more!
+ -> Supports JSON, NDJSON, TOML, CSV, TSV, PSV and more!
 
-  • Formats are detected automatically based on file extension, except for custom 
-    delimter CSV formats (e.g. TSV, PSV, etc.), which are detected with `--input-delimiter <DELIMITER>` and `--output-delimiter <DELIMITER>`.
+ -> Formats are detected automatically based on file extension, except for custom 
+   delimter CSV formats (e.g. TSV, PSV, etc.), which are detected with `--input-delimiter <DELIMITER>` and `--output-delimiter <DELIMITER>`.
 
-  • if there are any bugs or any features you want, open an issue at: `https://github.com/Tahaa-Dev/fiux`.
+ -> if there are any bugs or any features you want, open an issue at: `https://github.com/Tahaa-Dev/fiux`.
 
 
-╭────────────────·Examples·────────────────╮
-│                                      ••• │
-│ fiux convert data.json out.csv           │
-│ fiux validate broken.ndjson --verbose    │
-│ fiux convert big.csv big.json --verbose  │
-│                                          │
-╰──────────────────────────────────────────╯
+ ╭────────────────·Examples·─────────────────╮
+ │                                       ••• │
+ │ fiux convert data.json -o out.csv         │
+ │ fiux validate broken.ndjson --delimiter   │
+ │ fiux convert big.csv -o big.json --append │
+ │                                           │
+ ╰───────────────────────────────────────────╯
 "#;
 
 #[derive(Parser)]
 #[command(
     author,
     version,
-    about = "The fastest utility for converting between file formats.",
+    about = "The fastest streaming-first file conveter.",
     long_about = LONG_ABT
 )]
 pub struct Args {
     #[command(subcommand)]
     pub cmd: Commands,
 
-    /// Argument for setting a Markdown (MD) file to export error logs to.
+    /// Argument for setting a file to export error logs to.
     #[arg(short, long, value_hint = FilePath, global = true)]
     pub log_file: Option<PathBuf>,
 }

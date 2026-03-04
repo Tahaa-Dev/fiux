@@ -45,15 +45,13 @@ pub fn write_json(
             for (line_no, rec) in iter.enumerate() {
                 let line = line_no + 1;
                 if first_obj {
-                    wtr.write_all(b"  {\n").context(|| format!(
-                        "Failed to write opening curly brace for record: {}",
-                        line
-                    ))?;
+                    wtr.write_all(b"  {\n").context(|| {
+                        format!("Failed to write opening curly brace for record: {}", line)
+                    })?;
 
                     first_obj = false;
                 } else {
-                    wtr
-                        .write_all(b",\n  {\n")
+                    wtr.write_all(b",\n  {\n")
                         .context(|| format!("Failed to write bracket for record: {}", line))?;
                 }
 
@@ -106,15 +104,13 @@ pub fn write_json(
                             .context(|| format!("Failed to write key in record: {}", line))?;
                     }
 
-                    wtr
-                        .write_all(esc_buf.as_slice())
+                    wtr.write_all(esc_buf.as_slice())
                         .context(|| format!("Failed to write value in record: {}", line))?;
                 }
 
-                wtr.write_all(b"\n  }").context(|| format!(
-                    "Failed to write closing curly brace for record: {}",
-                    line
-                ))?;
+                wtr.write_all(b"\n  }").context(|| {
+                    format!("Failed to write closing curly brace for record: {}", line)
+                })?;
             }
 
             wtr.write_all(b"\n]").context("Failed to write closing bracket")?;
@@ -139,8 +135,7 @@ pub fn write_json(
 
                     first = false;
                 } else {
-                    wtr
-                        .write_all(b",\n")
+                    wtr.write_all(b",\n")
                         .context(|| format!("Failed to write comma after record: {}", idx))?;
 
                     serde_json::to_writer_pretty(&mut wtr, &obj)

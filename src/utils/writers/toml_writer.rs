@@ -30,21 +30,19 @@ pub fn toml_writer(
 
                     map.insert("Array".to_string(), obj);
 
-                    wtr
-                        .write_all(
-                            toml::to_string_pretty(&Value::Table(map))
-                                .context("Failed to serialize TOML table")?
-                                .as_bytes(),
-                        )
-                        .context("Failed to write TOML table")?;
+                    wtr.write_all(
+                        toml::to_string_pretty(&Value::Table(map))
+                            .context("Failed to serialize TOML table")?
+                            .as_bytes(),
+                    )
+                    .context("Failed to write TOML table")?;
                 } else {
-                    wtr
-                        .write_all(
-                            toml::to_string_pretty(&obj)
-                                .context("Failed to serialize TOML table")?
-                                .as_bytes(),
-                        )
-                        .context("Failed to write TOML table")?;
+                    wtr.write_all(
+                        toml::to_string_pretty(&obj)
+                            .context("Failed to serialize TOML table")?
+                            .as_bytes(),
+                    )
+                    .context("Failed to write TOML table")?;
                 }
             }
             wtr.flush().context("Failed to flush writer")?;
@@ -78,12 +76,10 @@ pub fn toml_writer(
             for (line_no, rec) in iter.enumerate() {
                 let line_no = line_no + 1;
                 if !first_row {
-                    wtr
-                        .write_all(b"\n[[Rows]]\n")
+                    wtr.write_all(b"\n[[Rows]]\n")
                         .context(|| format!("Failed to write key for row: {}", line_no))?;
                 } else {
-                    wtr
-                        .write_all(b"[[Rows]]\n")
+                    wtr.write_all(b"[[Rows]]\n")
                         .context(|| format!("Failed to write key for row: {}", line_no))?;
 
                     first_row = false;
@@ -119,8 +115,7 @@ pub fn toml_writer(
                     wtr.write_all(b" = ")
                         .context(|| format!("Failed to write key in record: {}", line_no))?;
 
-                    wtr
-                        .write_all(esc_buf.as_slice())
+                    wtr.write_all(esc_buf.as_slice())
                         .context(|| format!("Failed to write value in record: {}", line_no))?;
 
                     writeln!(&mut wtr).context("Failed to write newline")?;
@@ -145,14 +140,12 @@ pub fn toml_writer(
                 .unwrap_or_else(|| Value::Table(Map::new()));
 
                 if first {
-                    wtr
-                        .write_all(b"[[Array]]\n")
+                    wtr.write_all(b"[[Array]]\n")
                         .context(|| format!("Failed to write array key: {}", rec_no))?;
 
                     first = false;
                 } else {
-                    wtr
-                        .write_all(b"\n[[Array]]\n")
+                    wtr.write_all(b"\n[[Array]]\n")
                         .context(|| format!("Failed to write array key: {}", rec_no))?;
                 }
 
@@ -160,21 +153,19 @@ pub fn toml_writer(
                     let mut map = Map::with_capacity(1);
                     map.insert("Array".to_string(), obj);
 
-                    wtr
-                        .write_all(
-                            toml::to_string_pretty(&Value::Table(map))
-                                .context("Failed to serialize TOML table")?
-                                .as_bytes(),
-                        )
-                        .context("Failed to write TOML table")?;
+                    wtr.write_all(
+                        toml::to_string_pretty(&Value::Table(map))
+                            .context("Failed to serialize TOML table")?
+                            .as_bytes(),
+                    )
+                    .context("Failed to write TOML table")?;
                 } else {
-                    wtr
-                        .write_all(
-                            toml::to_string_pretty(&obj)
-                                .context("Failed to serialize valid TOML table")?
-                                .as_bytes(),
-                        )
-                        .context("Failed to write TOML table")?;
+                    wtr.write_all(
+                        toml::to_string_pretty(&obj)
+                            .context("Failed to serialize valid TOML table")?
+                            .as_bytes(),
+                    )
+                    .context("Failed to write TOML table")?;
                 }
 
                 wtr.flush().context("Failed to flush writer")?;

@@ -6,7 +6,6 @@ use std::{
 
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams};
 
-
 pub fn ndjson_decoder(
     mut reader: BufReader<File>,
 ) -> CtxResult<WriterStreams<impl Iterator<Item = CtxResult<DataTypes>>>> {
