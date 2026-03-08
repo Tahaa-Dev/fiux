@@ -1,3 +1,4 @@
+use resext::ctx;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -12,7 +13,7 @@ use crate::utils::{CtxResult, CtxResultErr, CtxResultExt, Log};
 pub fn validate_ndjson(path: &PathBuf) -> CtxResult<()> {
     let file = File::open(path)
         .context("Failed to validate file")
-        .context(|| format!("Failed to open file: {}", &path.to_string_lossy()))?;
+        .context(ctx!("Failed to open file: {}", &path.to_string_lossy()))?;
 
     let mut reader = BufReader::with_capacity(256 * 1024, file);
 
@@ -23,9 +24,7 @@ pub fn validate_ndjson(path: &PathBuf) -> CtxResult<()> {
 
     loop {
         // check for line reading errors
-        let n = reader
-            .read_until(b'\n', &mut buf)
-            .context(|| format!("Failed to read line: {}", idx))?;
+        let n = reader.read_until(b'\n', &mut buf).context(ctx!("Failed to read line: {}", idx))?;
 
         // check for EOF
         if n == 0 {
@@ -34,7 +33,7 @@ pub fn validate_ndjson(path: &PathBuf) -> CtxResult<()> {
 
         // check line validity
         let opt = serde_json::from_slice::<IgnoredAny>(&buf)
-            .context(|| format!("Invalid NDJSON values at line: {}", idx))
+            .context(ctx!("Invalid NDJSON values at line: {}", idx))
             .log("[WARN]")
             .is_none();
 

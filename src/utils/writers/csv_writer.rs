@@ -1,4 +1,5 @@
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, Log, WriterStreams, into_byte_record};
+use resext::ctx;
 
 use std::io::BufWriter;
 
@@ -31,7 +32,7 @@ pub fn csv_writer(
                 };
 
                 wtr.write_record(&b)
-                    .context(|| format!("Failed to write CSV record at: {}", line_no + 1))?;
+                    .context(ctx!("Failed to write CSV record at: {}", line_no + 1))?;
             }
 
             wtr.flush().context("Failed to flush writer")?;

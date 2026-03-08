@@ -1,3 +1,4 @@
+use resext::ctx;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -18,7 +19,7 @@ pub fn ndjson_decoder(
             buf.clear();
             let bytes = reader
                 .read_until(b'\n', &mut buf)
-                .context(|| format!("Failed to read line: {}", line_no))
+                .context(ctx!("Failed to read line: {}", line_no))
                 .log("[WARN]");
 
             if bytes.is_some_and(|b| b == 0) {
@@ -36,7 +37,7 @@ pub fn ndjson_decoder(
 
                 let ndjson_obj = serde_json::from_slice(buf.as_slice())
                     .context("Failed to deserialize file")
-                    .context(|| format!("Invalid NDJSON values at line: {}", line_no));
+                    .context(ctx!("Invalid NDJSON values at line: {}", line_no));
                 return match ndjson_obj {
                     Ok(ok) => Some(Ok(DataTypes::Json(ok))),
                     Err(err) => Some(Err(err)),

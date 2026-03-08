@@ -341,18 +341,18 @@ checksum = "5276caf25ac86c8d810222b3dbb938e512c55c6831a10f3e6ed1c93b84041f1c"
 
 [[package]]
 name = "resext"
-version = "1.2.0"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f5bb7a4b1de7d75843f05111417f2de19ac819481c371ac956de0e6e425f925"
+checksum = "19ab51cf2fde1d7f9ae0537ea022812d0c3e26dd4c3215eb8ca52cbc8c3c1e80"
 dependencies = [
  "resext-macro",
 ]
 
 [[package]]
 name = "resext-macro"
-version = "1.2.0"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d7115663982a321375f6dff9f038068d9b25b89ccb6adca7b1aac8b13d71c91"
+checksum = "477a814e3a80b84dbc24c59e164c6a2b32150efc00cef13f8e449f77fdfbdf40"
 dependencies = [
  "proc-macro2",
  "quote",

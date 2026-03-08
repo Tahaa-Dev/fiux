@@ -1,3 +1,4 @@
+use resext::ctx;
 use serde::de::IgnoredAny;
 use serde_json::Deserializer;
 use std::{fs::File, io::BufReader, path::PathBuf};
@@ -8,7 +9,7 @@ use crate::utils::{CtxResult, CtxResultErr, CtxResultExt, Log};
 pub fn validate_json(path: &PathBuf) -> CtxResult<()> {
     let file = File::open(path)
         .context("Failed to validate file")
-        .context(|| format!("Failed to open file: {}", &path.to_string_lossy()))?;
+        .context(ctx!("Failed to open file: {}", &path.to_string_lossy()))?;
 
     let reader = BufReader::with_capacity(256 * 1024, file);
 

@@ -1,3 +1,4 @@
+use resext::ctx;
 use std::{fs::File, io::BufReader};
 
 use crate::utils::{CtxResult, CtxResultExt, DataTypes, WriterStreams};
@@ -13,7 +14,7 @@ pub fn csv_decoder(
         .collect::<Vec<String>>();
 
     let iter = reader.into_byte_records().enumerate().map(move |(line_no, rec)| {
-        let record = rec.context(|| format!("Invalid CSV data at line: {}", line_no + 1));
+        let record = rec.context(ctx!("Invalid CSV data at line: {}", line_no + 1));
 
         match record {
             Ok(ok) => Ok(DataTypes::Csv(ok)),

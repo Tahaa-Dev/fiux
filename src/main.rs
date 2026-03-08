@@ -106,6 +106,7 @@ use std::io::{Error, ErrorKind as EK};
 use std::path::Path;
 use std::process::exit;
 use std::sync::LazyLock;
+
 use utils::*;
 
 pub static ARGS: LazyLock<Args> = LazyLock::new(Args::parse);

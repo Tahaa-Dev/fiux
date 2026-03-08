@@ -1,3 +1,4 @@
+use resext::ctx;
 use std::io::{BufWriter, Write};
 
 use toml::{Value, map::Map};
@@ -77,10 +78,10 @@ pub fn toml_writer(
                 let line_no = line_no + 1;
                 if !first_row {
                     wtr.write_all(b"\n[[Rows]]\n")
-                        .context(|| format!("Failed to write key for row: {}", line_no))?;
+                        .context(ctx!("Failed to write key for row: {}", line_no))?;
                 } else {
                     wtr.write_all(b"[[Rows]]\n")
-                        .context(|| format!("Failed to write key for row: {}", line_no))?;
+                        .context(ctx!("Failed to write key for row: {}", line_no))?;
 
                     first_row = false;
                 }
@@ -110,13 +111,13 @@ pub fn toml_writer(
                     }
 
                     wtr.write_all(h.as_bytes())
-                        .context(|| format!("Failed to write key in record: {}", line_no))?;
+                        .context(ctx!("Failed to write key in record: {}", line_no))?;
 
                     wtr.write_all(b" = ")
-                        .context(|| format!("Failed to write key in record: {}", line_no))?;
+                        .context(ctx!("Failed to write key in record: {}", line_no))?;
 
                     wtr.write_all(esc_buf.as_slice())
-                        .context(|| format!("Failed to write value in record: {}", line_no))?;
+                        .context(ctx!("Failed to write value in record: {}", line_no))?;
 
                     writeln!(&mut wtr).context("Failed to write newline")?;
                 }
@@ -141,12 +142,12 @@ pub fn toml_writer(
 
                 if first {
                     wtr.write_all(b"[[Array]]\n")
-                        .context(|| format!("Failed to write array key: {}", rec_no))?;
+                        .context(ctx!("Failed to write array key: {}", rec_no))?;
 
                     first = false;
                 } else {
                     wtr.write_all(b"\n[[Array]]\n")
-                        .context(|| format!("Failed to write array key: {}", rec_no))?;
+                        .context(ctx!("Failed to write array key: {}", rec_no))?;
                 }
 
                 if let Value::Array(_) = obj {
