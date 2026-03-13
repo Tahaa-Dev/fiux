@@ -18,52 +18,53 @@ pub enum FiuxErr {
     Custom(String),
 }
 
-enum Logger {
-    Stdout(BufWriter<std::io::Stdout>),
-    File(BufWriter<File>),
-}
-
-static LOGGER: LazyLock<Mutex<Logger>> = LazyLock::new(|| {
+static LOGGER: LazyLock<Mutex<BufWriter<File>>> = LazyLock::new(|| {
     let args = &*crate::ARGS;
+    let mut open = OpenOptions::new();
+
+    open.create(true).append(true);
 
     match &args.log_file {
         Some(path) => {
-            let res = OpenOptions::new().create(true).write(true).truncate(true).open(path);
+            let res = open.open(path);
 
             match res {
-                Ok(file) => Mutex::new(Logger::File(BufWriter::with_capacity(64 * 1024, file))),
+                Ok(file) => Mutex::new(BufWriter::with_capacity(64 * 1024, file)),
                 Err(err) => {
                     eprintln!("{} {}", "[WARN]".yellow(), err);
 
-                    Mutex::new(Logger::Stdout(BufWriter::with_capacity(
+                    Mutex::new(BufWriter::with_capacity(
                         64 * 1024,
-                        std::io::stdout(),
-                    )))
+                        open.open("fiux.log")
+                            .inspect_err(|e| {
+                                eprintln!(
+                                    "{} Failed to open log file: ./fiux.log\nError: {}",
+                                    "[FATAL]".red().bold(),
+                                    e
+                                );
+                                std::process::exit(1);
+                            })
+                            .unwrap(),
+                    ))
                 }
             }
         }
 
-        None => Mutex::new(Logger::Stdout(BufWriter::with_capacity(64 * 1024, std::io::stdout()))),
+        None => Mutex::new(BufWriter::with_capacity(
+            64 * 1024,
+            open.open("fiux.log")
+                .inspect_err(|e| {
+                    eprintln!(
+                        "{} Failed to open log file: ./fiux.log\nError: {}",
+                        "[FATAL]".red().bold(),
+                        e
+                    );
+                    std::process::exit(1);
+                })
+                .unwrap(),
+        )),
     }
 });
-
-impl std::io::Write for Logger {
-    #[inline]
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        match self {
-            Logger::Stdout(out) => out.write(buf),
-            Logger::File(file) => file.write(buf),
-        }
-    }
-
-    #[inline]
-    fn flush(&mut self) -> std::io::Result<()> {
-        match self {
-            Logger::Stdout(out) => out.flush(),
-            Logger::File(file) => file.flush(),
-        }
-    }
-}
 
 pub trait Log<T> {
     fn log(self, level: &str) -> Option<T>;
